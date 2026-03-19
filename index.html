@@ -857,7 +857,7 @@ function getRecurringFormData() {
 }
 
 function saveRecurring() {
-  const { desc, amount, cat, freq, day, startDate, endDate } = getRecurringFormData();
+  const { desc, amount, cat, freq, day, startDate, endDate, payment } = getRecurringFormData();
   if (!desc)             { showToast('⚠️ Açıklama girin'); return; }
   if (!amount||amount<=0){ showToast('⚠️ Geçerli tutar girin'); return; }
   if (!startDate)        { showToast('⚠️ Başlangıç tarihi seçin'); return; }
@@ -881,7 +881,7 @@ function saveRecurring() {
 }
 
 function saveAndGenerate() {
-  const { desc, amount, cat, freq, day, startDate, endDate } = getRecurringFormData();
+  const { desc, amount, cat, freq, day, startDate, endDate, payment } = getRecurringFormData();
   if (!desc)            { showToast('⚠️ Açıklama girin'); return; }
   if (!amount||amount<=0){ showToast('⚠️ Geçerli tutar girin'); return; }
   if (!startDate)       { showToast('⚠️ Başlangıç tarihi seçin'); return; }
