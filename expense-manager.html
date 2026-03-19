@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gider Takip</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #f4f5f7;
+    color: #1a1a2e;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  .app { max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .header-left h1 { font-size: 44px; font-weight: 900; color: #1a1a2e; line-height: 1; }
+  .header-left h1 span { color: #e6a800; }
+
+  .header-left p {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #9a9aaa;
+    margin-top: 6px;
+  }
+
+  .header-date {
+    text-align: right;
+    font-size: 12px;
+    color: #9a9aaa;
+    letter-spacing: 1px;
+    line-height: 1.8;
+    padding-top: 4px;
+  }
+
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.total::before   { background: #e6a800; }
+  .stat-card.income::before  { background: #27ae60; }
+  .stat-card.expense::before { background: #ff4444; }
+
+  .stat-label {
+    font-size: 11px;
+    color: #9a9aaa;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .stat-amount { font-size: 24px; font-weight: bold; }
+  .stat-card.total   .stat-amount { color: #e6a800; }
+  .stat-card.income  .stat-amount { color: #27ae60; }
+  .stat-card.expense .stat-amount { color: #ff4444; }
+
+  .stat-sub { font-size: 11px; color: #9a9aaa; margin-top: 4px; }
+
+  /* CHART PANEL */
+  .chart-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #9a9aaa;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #e6a800;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 80px;
+    margin-top: 8px;
+  }
+
+  .chart-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .chart-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.4s ease;
+    min-height: 2px;
+  }
+
+  .chart-label { font-size: 12px; color: #9a9aaa; text-align: center; }
+
+  /* ADD FORM */
+  .add-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-row.three { grid-template-columns: 2fr 1fr 1fr; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+  label {
+    font-size: 11px;
+    color: #9a9aaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  input, select {
+    background: #f4f5f7;
+    border: 1px solid #e0e0e8;
+    border-radius: 10px;
+    color: #1a1a2e;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: #e6a800;
+    box-shadow: 0 0 0 3px rgba(230,168,0,0.15);
+  }
+
+  select option { background: #f4f5f7; }
+
+  .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  .type-btn {
+    background: #f4f5f7;
+    border: 1px solid #e0e0e8;
+    border-radius: 10px;
+    color: #9a9aaa;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .type-btn.active-expense { background: rgba(255,68,68,0.1); border-color: #ff4444; color: #ff4444; }
+  .type-btn.active-income  { background: rgba(39,174,96,0.1); border-color: #27ae60; color: #27ae60; }
+
+  .add-btn {
+    background: #e6a800;
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 12px 28px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .add-btn:hover { background: #cc9500; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(230,168,0,0.35); }
+  .add-btn:active { transform: translateY(0); }
+
+  /* FILTERS */
+  .filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: #ffffff;
+    border: 1px solid #e0e0e8;
+    border-radius: 20px;
+    color: #9a9aaa;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    padding: 7px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .filter-btn.active { background: #1a1a2e; color: #ffffff; border-color: transparent; }
+
+  .search-wrap { margin-left: auto; position: relative; }
+
+  .search-wrap input {
+    padding: 7px 14px 7px 32px;
+    font-size: 13px;
+    border-radius: 20px;
+    width: 180px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9a9aaa;
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #9a9aaa;
+  }
+
+  .clear-btn {
+    background: #ffffff;
+    border: 1px solid #e0e0e8;
+    border-radius: 10px;
+    color: #1a1a2e;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .clear-btn:hover { border-color: #ff4444; color: #ff4444; }
+
+  .toolbar-btn {
+    background: #ffffff;
+    border: 1px solid #e0e0e8;
+    border-radius: 10px;
+    color: #1a1a2e;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .toolbar-btn:hover {
+    background: rgba(230,168,0,0.1);
+    border-color: #e6a800;
+    color: #b38000;
+  }
+
+  .drive-btn.connected {
+    background: rgba(39,174,96,0.1);
+    border-color: #27ae60;
+    color: #27ae60;
+  }
+
+  /* TRANSACTION LIST */
+  .transactions-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .transaction-item {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid transparent;
+    animation: slideIn 0.25s ease;
+    transition: transform 0.15s;
+  }
+
+  .transaction-item.income  { border-left-color: #27ae60; }
+  .transaction-item.expense { border-left-color: #ff4444; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .transaction-item:hover { transform: translateX(3px); }
+
+  .tx-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .tx-info { flex: 1; min-width: 0; }
+
+  .tx-desc {
+    font-size: 15px;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .tx-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tx-cat-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: bold;
+  }
+
+  .tx-date-label { font-size: 10px; color: #9a9aaa; }
+
+  .tx-amount {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .tx-amount.income  { color: #27ae60; }
+  .tx-amount.expense { color: #ff4444; }
+
+  .tx-delete {
+    background: none;
+    border: none;
+    color: #c0c0cc;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    line-height: 1;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .tx-delete:hover { color: #1a1a2e; background: #f0f0f5; }
+
+  /* CATEGORY BADGE COLORS — matching ToDo tag style */
+  .cat-food          { background: rgba(255,107,61,0.15); color: #ff6b3d; }
+  .cat-transport     { background: rgba(74,158,255,0.15); color: #4a9eff; }
+  .cat-health        { background: rgba(39,174,96,0.15);  color: #27ae60; }
+  .cat-entertainment { background: rgba(155,89,182,0.15); color: #9b59b6; }
+  .cat-shopping      { background: rgba(232,64,153,0.15); color: #e84099; }
+  .cat-bills         { background: rgba(255,68,68,0.15);  color: #ff4444; }
+  .cat-salary        { background: rgba(230,168,0,0.15);  color: #e6a800; }
+  .cat-other         { background: rgba(154,154,170,0.15);color: #9a9aaa; }
+
+  /* MONTH GROUP */
+  .month-group { margin-bottom: 8px; }
+
+  .month-label {
+    font-size: 11px;
+    color: #9a9aaa;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 4px 6px;
+    border-bottom: 1px solid #e0e0e8;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 50px 20px; color: #9a9aaa; }
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 13px; letter-spacing: 1px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a2e;
+    border-radius: 30px;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    padding: 10px 22px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .form-row, .form-row.three { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 10px; }
+    .header-date { text-align: left; }
+    .search-wrap { margin-left: 0; width: 100%; }
+    .search-wrap input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>Gider<span>Takip</span></h1>
+      <p id="headerSub">GELİR & GİDER TAKİP SİSTEMİ</p>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">Net Bakiye</div>
+      <div class="stat-amount" id="totalBalance">₺0</div>
+      <div class="stat-sub" id="totalSub">Tüm zamanlar</div>
+    </div>
+    <div class="stat-card income">
+      <div class="stat-label">Toplam Gelir</div>
+      <div class="stat-amount" id="totalIncome">₺0</div>
+      <div class="stat-sub" id="incomeSub">Bu ay: ₺0</div>
+    </div>
+    <div class="stat-card expense">
+      <div class="stat-label">Toplam Gider</div>
+      <div class="stat-amount" id="totalExpense">₺0</div>
+      <div class="stat-sub" id="expenseSub">Bu ay: ₺0</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-panel">
+    <div class="panel-title">Kategori Dağılımı</div>
+    <div class="chart-bars" id="chartBars">
+      <div class="empty-state" style="flex:1;padding:20px 0;">
+        <p>Henüz işlem yok</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="add-panel">
+    <div class="panel-title">Yeni İşlem Ekle</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Açıklama</label>
+        <input type="text" id="desc" placeholder="Açıklama girin..." autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Tutar (₺)</label>
+        <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="form-row three">
+      <div class="form-group">
+        <label>Tür</label>
+        <div class="type-toggle">
+          <button class="type-btn active-expense" id="btnExpense" onclick="setType('expense')">— Gider</button>
+          <button class="type-btn" id="btnIncome" onclick="setType('income')">+ Gelir</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Kategori</label>
+        <select id="category">
+          <option value="food">🍔 Yemek</option>
+          <option value="transport">🚗 Ulaşım</option>
+          <option value="health">💊 Sağlık</option>
+          <option value="entertainment">🎮 Eğlence</option>
+          <option value="shopping">🛍️ Alışveriş</option>
+          <option value="bills">💡 Faturalar</option>
+          <option value="salary">💼 Maaş</option>
+          <option value="other">📦 Diğer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tarih</label>
+        <input type="date" id="txDate">
+      </div>
+    </div>
+
+    <button class="add-btn" onclick="addTransaction()">İŞLEM EKLE</button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-bar">
+    <button class="filter-btn active" onclick="setFilter('all', this)">Tümü</button>
+    <button class="filter-btn" onclick="setFilter('expense', this)">Giderler</button>
+    <button class="filter-btn" onclick="setFilter('income', this)">Gelirler</button>
+    <button class="filter-btn" onclick="setFilter('month', this)">Bu Ay</button>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Ara..." oninput="renderList()">
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div>
+    <div class="section-header">
+      <span class="section-title" id="listTitle">İşlemler</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="toolbar-btn drive-btn" id="driveAuthBtn" onclick="driveSignIn()">🔗 Drive Bağla</button>
+        <button class="toolbar-btn" id="driveSaveBtn" onclick="saveToDrive()" style="display:none">☁️ Drive'a Kaydet</button>
+        <button class="toolbar-btn" id="driveLoadBtn" onclick="loadFromDrive()" style="display:none">📂 Drive'dan Yükle</button>
+        <button class="toolbar-btn" onclick="exportJSON()" title="JSON olarak dışa aktar">📤 Dışa Aktar</button>
+        <button class="toolbar-btn" onclick="document.getElementById('importFile').click()" title="JSON içe aktar">📥 İçe Aktar</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+        <button class="clear-btn" onclick="clearAll()">Tümünü Sil</button>
+      </div>
+    </div>
+    <div class="transactions-list" id="transactionList"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let transactions = JSON.parse(localStorage.getItem('gider_txns') || '[]');
+let currentType = 'expense';
+let currentFilter = 'all';
+
+const CATEGORIES = {
+  food:          { label: 'Yemek',      icon: '🍔', cls: 'cat-food' },
+  transport:     { label: 'Ulaşım',     icon: '🚗', cls: 'cat-transport' },
+  health:        { label: 'Sağlık',     icon: '💊', cls: 'cat-health' },
+  entertainment: { label: 'Eğlence',    icon: '🎮', cls: 'cat-entertainment' },
+  shopping:      { label: 'Alışveriş',  icon: '🛍️', cls: 'cat-shopping' },
+  bills:         { label: 'Faturalar',  icon: '💡', cls: 'cat-bills' },
+  salary:        { label: 'Maaş',       icon: '💼', cls: 'cat-salary' },
+  other:         { label: 'Diğer',      icon: '📦', cls: 'cat-other' },
+};
+
+// ===== INIT =====
+function init() {
+  // Set date
+  const now = new Date();
+  document.getElementById('headerDate').innerHTML =
+    now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+    + '<br>' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('txDate').value = now.toISOString().split('T')[0];
+
+  updateStats();
+  updateChart();
+  renderList();
+}
+
+// ===== TYPE TOGGLE =====
+function setType(type) {
+  currentType = type;
+  const btnE = document.getElementById('btnExpense');
+  const btnI = document.getElementById('btnIncome');
+  btnE.className = 'type-btn' + (type === 'expense' ? ' active-expense' : '');
+  btnI.className = 'type-btn' + (type === 'income' ? ' active-income' : '');
+}
+
+// ===== ADD TRANSACTION =====
+function addTransaction() {
+  const desc   = document.getElementById('desc').value.trim();
+  const amount = parseFloat(document.getElementById('amount').value);
+  const cat    = document.getElementById('category').value;
+  const date   = document.getElementById('txDate').value;
+
+  if (!desc) { showToast('⚠️ Açıklama girin'); return; }
+  if (!amount || amount <= 0) { showToast('⚠️ Geçerli tutar girin'); return; }
+  if (!date) { showToast('⚠️ Tarih seçin'); return; }
+
+  const tx = {
+    id: Date.now(),
+    desc, amount, category: cat, type: currentType, date,
+  };
+
+  transactions.unshift(tx);
+  save();
+  updateStats();
+  updateChart();
+  renderList();
+
+  document.getElementById('desc').value = '';
+  document.getElementById('amount').value = '';
+
+  showToast(currentType === 'expense' ? '✓ Gider eklendi' : '✓ Gelir eklendi');
+}
+
+// ===== DELETE =====
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  save();
+  updateStats();
+  updateChart();
+  renderList();
+  showToast('Silindi');
+}
+
+function clearAll() {
+  if (!transactions.length) return;
+  if (!confirm('Tüm işlemler silinsin mi?')) return;
+  transactions = [];
+  save();
+  updateStats();
+  updateChart();
+  renderList();
+  showToast('Tüm işlemler silindi');
+}
+
+// ===== GOOGLE DRIVE =====
+const CLIENT_ID  = '860410014740-gph7r4l4g81nn550vsid0d6lebj2l2cj.apps.googleusercontent.com';
+const SCOPES     = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+const FILE_NAME  = 'gider-takip-veriler.json';
+
+let driveAccessToken = null;
+let driveFileId      = localStorage.getItem('drive_file_id') || null;
+let tokenClient      = null;
+
+// GIS + GAPI yüklenince başlat
+window.addEventListener('load', () => {
+  // GAPI yükle
+  const gapiInterval = setInterval(() => {
+    if (window.gapi) {
+      clearInterval(gapiInterval);
+      gapi.load('client', async () => {
+        await gapi.client.init({});
+        await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+      });
+    }
+  }, 200);
+
+  // GIS token client
+  const gisInterval = setInterval(() => {
+    if (window.google && google.accounts) {
+      clearInterval(gisInterval);
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: onTokenReceived,
+      });
+    }
+  }, 200);
+});
+
+function driveSignIn() {
+  if (!tokenClient) { showToast('⚠️ Google API yükleniyor, bekleyin...'); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function onTokenReceived(resp) {
+  if (resp.error) { showToast('⚠️ Giriş başarısız: ' + resp.error); return; }
+  driveAccessToken = resp.access_token;
+  gapi.client.setToken({ access_token: driveAccessToken });
+
+  const btn = document.getElementById('driveAuthBtn');
+  btn.textContent = '✅ Drive Bağlı';
+  btn.classList.add('connected');
+  document.getElementById('driveSaveBtn').style.display = '';
+  document.getElementById('driveLoadBtn').style.display = '';
+  showToast('✓ Google Drive bağlandı');
+}
+
+async function saveToDrive() {
+  if (!driveAccessToken) { showToast('⚠️ Önce Drive\'a bağlanın'); return; }
+  if (!transactions.length) { showToast('⚠️ Kaydedilecek işlem yok'); return; }
+
+  showToast('☁️ Drive\'a kaydediliyor...');
+
+  const content = JSON.stringify({
+    app: 'GiderTakip',
+    savedAt: new Date().toISOString(),
+    count: transactions.length,
+    transactions
+  }, null, 2);
+
+  const blob = new Blob([content], { type: 'application/json' });
+
+  try {
+    if (driveFileId) {
+      // Var olan dosyayı güncelle
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + driveAccessToken,
+          'Content-Type': 'application/json',
+        },
+        body: blob,
+      });
+      showToast(`✓ ${transactions.length} işlem Drive'a kaydedildi`);
+    } else {
+      // Yeni dosya oluştur — appDataFolder yerine Drive kökü
+      const meta = { name: FILE_NAME, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file', blob);
+
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + driveAccessToken },
+        body: form,
+      });
+      const file = await res.json();
+      driveFileId = file.id;
+      localStorage.setItem('drive_file_id', driveFileId);
+      showToast(`✓ Drive'da yeni dosya oluşturuldu`);
+    }
+  } catch(err) {
+    showToast('⚠️ Kayıt başarısız: ' + err.message);
+  }
+}
+
+async function loadFromDrive() {
+  if (!driveAccessToken) { showToast('⚠️ Önce Drive\'a bağlanın'); return; }
+
+  // Dosya ID yoksa Drive'da ara
+  if (!driveFileId) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`,
+        { headers: { 'Authorization': 'Bearer ' + driveAccessToken } }
+      );
+      const data = await res.json();
+      if (!data.files || !data.files.length) {
+        showToast('⚠️ Drive\'da kayıtlı dosya bulunamadı');
+        return;
+      }
+      driveFileId = data.files[0].id;
+      localStorage.setItem('drive_file_id', driveFileId);
+    } catch(err) {
+      showToast('⚠️ Dosya aranırken hata: ' + err.message);
+      return;
+    }
+  }
+
+  showToast('📂 Drive\'dan yükleniyor...');
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+      { headers: { 'Authorization': 'Bearer ' + driveAccessToken } }
+    );
+    const data = await res.json();
+    const imported = Array.isArray(data) ? data : (data.transactions || []);
+    if (!imported.length) { showToast('⚠️ Dosyada işlem bulunamadı'); return; }
+
+    if (!confirm(`Drive'da ${imported.length} işlem bulundu. Mevcut verilerle birleştirilsin mi?`)) return;
+
+    const existingIds = new Set(transactions.map(t => t.id));
+    const newTxs = imported.filter(t => !existingIds.has(t.id));
+    transactions = [...transactions, ...newTxs];
+    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    save();
+    updateStats();
+    updateChart();
+    renderList();
+    showToast(`✓ ${newTxs.length} yeni işlem yüklendi`);
+  } catch(err) {
+    showToast('⚠️ Yükleme başarısız: ' + err.message);
+  }
+}
+
+// ===== LOCAL EXPORT / IMPORT =====
+function exportJSON() {
+  if (!transactions.length) { showToast('⚠️ Dışa aktarılacak işlem yok'); return; }
+  const data = {
+    app: 'GiderTakip',
+    exportDate: new Date().toISOString(),
+    count: transactions.length,
+    transactions: transactions
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `gider-takip-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✓ ${transactions.length} işlem dışa aktarıldı`);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = Array.isArray(data) ? data : (data.transactions || []);
+      if (!imported.length) { showToast('⚠️ Dosyada işlem bulunamadı'); return; }
+      if (!confirm(`${imported.length} işlem içe aktarılsın mı? Mevcut verilerle birleştirilecek.`)) return;
+      const existingIds = new Set(transactions.map(t => t.id));
+      const newTxs = imported.filter(t => !existingIds.has(t.id));
+      transactions = [...transactions, ...newTxs];
+      transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      save();
+      updateStats();
+      updateChart();
+      renderList();
+      showToast(`✓ ${newTxs.length} yeni işlem eklendi`);
+    } catch(err) {
+      showToast('⚠️ Geçersiz dosya formatı');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ===== STATS =====
+function updateStats() {
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0,7);
+
+  const income  = transactions.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+  const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+  const balance = income - expense;
+
+  const mIncome  = transactions.filter(t => t.type === 'income'  && t.date.startsWith(thisMonth)).reduce((s,t)=>s+t.amount,0);
+  const mExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonth)).reduce((s,t)=>s+t.amount,0);
+
+  document.getElementById('totalBalance').textContent = fmt(balance);
+  document.getElementById('totalIncome').textContent  = fmt(income);
+  document.getElementById('totalExpense').textContent = fmt(expense);
+  document.getElementById('incomeSub').textContent    = 'Bu ay: ' + fmt(mIncome);
+  document.getElementById('expenseSub').textContent   = 'Bu ay: ' + fmt(mExpense);
+}
+
+// ===== CHART =====
+function updateChart() {
+  const container = document.getElementById('chartBars');
+  const expenses = transactions.filter(t => t.type === 'expense');
+
+  if (!expenses.length) {
+    container.innerHTML = '<div class="empty-state" style="flex:1;padding:20px 0;"><p>Henüz gider yok</p></div>';
+    return;
+  }
+
+  // Group by category
+  const catTotals = {};
+  expenses.forEach(t => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+  });
+
+  const entries = Object.entries(catTotals).sort((a,b) => b[1]-a[1]);
+  const max = Math.max(...entries.map(e => e[1]));
+
+  const CAT_COLORS = {
+    food: '#f5922e', transport: '#2e7cf6', health: '#e84545',
+    entertainment: '#9b4fff', shopping: '#e84099', bills: '#e84545',
+    salary: '#18a96a', other: '#a0a8bb'
+  };
+
+  container.innerHTML = entries.map(([cat, total]) => {
+    const pct = Math.max(4, Math.round((total / max) * 100));
+    const color = CAT_COLORS[cat] || '#6b7280';
+    const label = CATEGORIES[cat]?.label || cat;
+    return `
+      <div class="chart-bar-wrap" title="${label}: ${fmt(total)}">
+        <div class="chart-bar" style="height:${pct}%;background:${color};opacity:0.85;"></div>
+        <div class="chart-label">${CATEGORIES[cat]?.icon || '📦'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== RENDER LIST =====
+function renderList() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const now = new Date().toISOString().slice(0,7);
+
+  let filtered = transactions.filter(t => {
+    if (currentFilter === 'expense' && t.type !== 'expense') return false;
+    if (currentFilter === 'income'  && t.type !== 'income')  return false;
+    if (currentFilter === 'month'   && !t.date.startsWith(now)) return false;
+    if (search && !t.desc.toLowerCase().includes(search) && !CATEGORIES[t.category]?.label.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const listEl = document.getElementById('transactionList');
+  document.getElementById('listTitle').textContent = `İşlemler (${filtered.length})`;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">💸</div>
+        <p>Gösterilecek işlem yok</p>
+      </div>`;
+    return;
+  }
+
+  // Group by month
+  const groups = {};
+  filtered.forEach(t => {
+    const m = t.date.slice(0,7);
+    if (!groups[m]) groups[m] = [];
+    groups[m].push(t);
+  });
+
+  const months = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+  listEl.innerHTML = months.map(month => {
+    const txs = groups[month];
+    const monthInc = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const monthExp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const [y,m] = month.split('-');
+    const monthName = new Date(y, m-1).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
+
+    const items = txs.map(t => {
+      const cat = CATEGORIES[t.category] || CATEGORIES.other;
+      const sign = t.type === 'income' ? '+' : '-';
+      const d = new Date(t.date + 'T00:00:00');
+      const dateStr = d.toLocaleDateString('tr-TR', {day:'2-digit', month:'short'});
+      return `
+        <div class="transaction-item ${t.type}">
+          <div class="tx-icon ${cat.cls}">${cat.icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${escHtml(t.desc)}</div>
+            <div class="tx-meta">
+              <span class="tx-date-label">${dateStr}</span>
+              <span class="tx-cat-badge ${cat.cls}">${cat.label}</span>
+            </div>
+          </div>
+          <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Sil">✕</button>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="month-group">
+        <div class="month-label">
+          <span>${monthName}</span>
+          <span>${monthExp > 0 ? '−'+fmt(monthExp) : ''} ${monthInc > 0 ? '+'+fmt(monthInc) : ''}</span>
+        </div>
+        ${items}
+      </div>`;
+  }).join('');
+}
+
+// ===== HELPERS =====
+function fmt(n) {
+  return '₺' + Math.abs(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function save() {
+  localStorage.setItem('gider_txns', JSON.stringify(transactions));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.target.id === 'desc' || e.target.id === 'amount')) {
+    addTransaction();
+  }
+});
+
+// Update clock
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('headerDate').innerHTML =
+    now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+    + '<br>' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+}, 60000);
+
+init();
+</script>
+</body>
+</html>
