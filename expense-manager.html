@@ -6,419 +6,191 @@
 <title>Gider Takip</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
-
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: #f4f5f7;
-    color: #1a1a2e;
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
-    padding-bottom: 60px;
-  }
-
+  body { background: #f4f5f7; color: #1a1a2e; font-family: Arial, sans-serif; min-height: 100vh; padding-bottom: 60px; }
   .app { max-width: 900px; margin: 0 auto; padding: 40px 20px 80px; }
 
   /* HEADER */
-  header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-
+  header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
   .header-left h1 { font-size: 44px; font-weight: 900; color: #1a1a2e; line-height: 1; }
   .header-left h1 span { color: #e6a800; }
-
-  .header-left p {
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #9a9aaa;
-    margin-top: 6px;
-  }
-
-  .header-date {
-    text-align: right;
-    font-size: 12px;
-    color: #9a9aaa;
-    letter-spacing: 1px;
-    line-height: 1.8;
-    padding-top: 4px;
-  }
+  .header-left p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #9a9aaa; margin-top: 6px; }
+  .header-date { text-align: right; font-size: 12px; color: #9a9aaa; letter-spacing: 1px; line-height: 1.8; padding-top: 4px; }
 
   /* STAT CARDS */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .stat-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-  }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
   .stat-card.total::before   { background: #e6a800; }
   .stat-card.income::before  { background: #27ae60; }
   .stat-card.expense::before { background: #ff4444; }
-
-  .stat-label {
-    font-size: 11px;
-    color: #9a9aaa;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-  }
-
+  .stat-label { font-size: 11px; color: #9a9aaa; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
   .stat-amount { font-size: 24px; font-weight: bold; }
   .stat-card.total   .stat-amount { color: #e6a800; }
   .stat-card.income  .stat-amount { color: #27ae60; }
   .stat-card.expense .stat-amount { color: #ff4444; }
-
   .stat-sub { font-size: 11px; color: #9a9aaa; margin-top: 4px; }
 
-  /* CHART PANEL */
-  .chart-panel {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  }
+  /* PANEL */
+  .panel { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .panel-title { font-size: 11px; font-weight: bold; letter-spacing: 2px; color: #9a9aaa; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .panel-title::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #e6a800; flex-shrink: 0; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .panel-header .panel-title { margin-bottom: 0; }
 
-  .panel-title {
-    font-size: 11px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: #9a9aaa;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  /* TABS */
+  .tab-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn { background: #f4f5f7; border: 1px solid #e0e0e8; border-radius: 20px; color: #9a9aaa; font-family: Arial, sans-serif; font-size: 12px; padding: 5px 14px; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { background: #1a1a2e; color: #fff; border-color: transparent; }
 
-  .panel-title::before {
-    content: '';
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #e6a800;
-  }
+  /* CHARTS */
+  .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+  .chart-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 2px; }
+  .chart-label { font-size: 11px; color: #9a9aaa; text-align: center; }
+  .chart-val { font-size: 9px; color: #9a9aaa; }
+  .chart-legend-row { display: flex; gap: 16px; margin-bottom: 10px; font-size: 11px; }
+  .legend-inc { display: flex; align-items: center; gap: 5px; color: #27ae60; font-weight: bold; }
+  .legend-exp { display: flex; align-items: center; gap: 5px; color: #ff4444; font-weight: bold; }
+  .legend-inc::before { content: ''; width: 10px; height: 10px; border-radius: 2px; background: #27ae60; display: inline-block; }
+  .legend-exp::before { content: ''; width: 10px; height: 10px; border-radius: 2px; background: #ff4444; display: inline-block; }
+  .monthly-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; overflow-x: auto; padding-bottom: 2px; }
+  .monthly-col { display: flex; flex-direction: column; align-items: center; min-width: 44px; flex: 1; }
+  .monthly-bars { display: flex; gap: 3px; align-items: flex-end; width: 100%; height: 100px; }
+  .monthly-bar { flex: 1; border-radius: 3px 3px 0 0; transition: height 0.4s ease; min-height: 2px; }
+  .monthly-bar.inc { background: #27ae60; opacity: 0.85; }
+  .monthly-bar.exp { background: #ff4444; opacity: 0.85; }
+  .monthly-month { font-size: 9px; color: #9a9aaa; text-align: center; margin-top: 4px; }
+  .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 140px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { flex: 1; color: #1a1a2e; }
+  .legend-pct { color: #9a9aaa; font-weight: bold; font-size: 11px; }
+  .legend-amt { color: #1a1a2e; font-size: 11px; }
 
-  .chart-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    height: 80px;
-    margin-top: 8px;
-  }
+  /* PROJEKSIYON */
+  .proj-input-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .proj-input-row .form-group { flex: 1; min-width: 160px; }
+  .proj-calc-btn { background: #e6a800; border: none; border-radius: 10px; color: #fff; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; padding: 10px 20px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+  .proj-calc-btn:hover { background: #cc9500; }
 
-  .chart-bar-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    height: 100%;
-    justify-content: flex-end;
-  }
+  .proj-result { display: none; }
+  .proj-result.visible { display: block; }
 
-  .chart-bar {
-    width: 100%;
-    border-radius: 4px 4px 0 0;
-    transition: height 0.4s ease;
-    min-height: 2px;
-  }
+  .proj-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .proj-card { border-radius: 12px; padding: 14px; text-align: center; }
+  .proj-card.balance-pos { background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.3); }
+  .proj-card.balance-neg { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3); }
+  .proj-card.inc-card    { background: rgba(39,174,96,0.07); border: 1px solid rgba(39,174,96,0.2); }
+  .proj-card.exp-card    { background: rgba(255,68,68,0.07); border: 1px solid rgba(255,68,68,0.2); }
+  .proj-card-label { font-size: 10px; color: #9a9aaa; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+  .proj-card-amount { font-size: 22px; font-weight: bold; }
+  .proj-card.balance-pos .proj-card-amount { color: #27ae60; }
+  .proj-card.balance-neg .proj-card-amount { color: #ff4444; }
+  .proj-card.inc-card    .proj-card-amount { color: #27ae60; }
+  .proj-card.exp-card    .proj-card-amount { color: #ff4444; }
+  .proj-card-sub { font-size: 11px; color: #9a9aaa; margin-top: 4px; }
 
-  .chart-label { font-size: 12px; color: #9a9aaa; text-align: center; }
+  .proj-verdict { text-align: center; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: bold; margin-bottom: 16px; }
+  .proj-verdict.pos { background: rgba(39,174,96,0.1); color: #27ae60; }
+  .proj-verdict.neg { background: rgba(255,68,68,0.1); color: #ff4444; }
 
-  /* ADD FORM */
-  .add-panel {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  }
+  .proj-monthly { margin-top: 4px; }
+  .proj-monthly-title { font-size: 11px; color: #9a9aaa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .proj-month-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f5; font-size: 13px; }
+  .proj-month-row:last-child { border-bottom: none; }
+  .proj-month-name { width: 80px; color: #9a9aaa; font-size: 12px; flex-shrink: 0; }
+  .proj-month-bar-wrap { flex: 1; position: relative; height: 8px; background: #f0f0f5; border-radius: 4px; overflow: hidden; }
+  .proj-month-bar-inc { position: absolute; left: 0; top: 0; height: 100%; background: #27ae60; opacity: 0.7; border-radius: 4px; transition: width 0.4s; }
+  .proj-month-bar-exp { position: absolute; left: 0; top: 0; height: 100%; background: #ff4444; opacity: 0.7; border-radius: 4px; transition: width 0.4s; }
+  .proj-month-net { width: 90px; text-align: right; font-weight: bold; font-size: 12px; flex-shrink: 0; }
+  .proj-month-net.pos { color: #27ae60; }
+  .proj-month-net.neg { color: #ff4444; }
+  .proj-cumulative { width: 90px; text-align: right; font-size: 11px; color: #9a9aaa; flex-shrink: 0; }
 
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
+  /* FORM */
+  .add-panel { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
   .form-row.three { grid-template-columns: 2fr 1fr 1fr; }
-
   .form-group { display: flex; flex-direction: column; gap: 5px; }
-
-  label {
-    font-size: 11px;
-    color: #9a9aaa;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  input, select {
-    background: #f4f5f7;
-    border: 1px solid #e0e0e8;
-    border-radius: 10px;
-    color: #1a1a2e;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    width: 100%;
-  }
-
-  input:focus, select:focus {
-    border-color: #e6a800;
-    box-shadow: 0 0 0 3px rgba(230,168,0,0.15);
-  }
-
+  label { font-size: 11px; color: #9a9aaa; letter-spacing: 1px; text-transform: uppercase; }
+  input, select { background: #f4f5f7; border: 1px solid #e0e0e8; border-radius: 10px; color: #1a1a2e; font-family: Arial, sans-serif; font-size: 14px; padding: 10px 12px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+  input:focus, select:focus { border-color: #e6a800; box-shadow: 0 0 0 3px rgba(230,168,0,0.15); }
   select option { background: #f4f5f7; }
-
   .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-  .type-btn {
-    background: #f4f5f7;
-    border: 1px solid #e0e0e8;
-    border-radius: 10px;
-    color: #9a9aaa;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-    font-weight: bold;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-  }
-
+  .type-btn { background: #f4f5f7; border: 1px solid #e0e0e8; border-radius: 10px; color: #9a9aaa; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; padding: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
   .type-btn.active-expense { background: rgba(255,68,68,0.1); border-color: #ff4444; color: #ff4444; }
-  .type-btn.active-income  { background: rgba(39,174,96,0.1); border-color: #27ae60; color: #27ae60; }
-
-  .add-btn {
-    background: #e6a800;
-    border: none;
-    border-radius: 10px;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 12px 28px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    width: 100%;
-    margin-top: 6px;
-  }
-
+  .type-btn.active-income  { background: rgba(39,174,96,0.1);  border-color: #27ae60; color: #27ae60; }
+  .add-btn { background: #e6a800; border: none; border-radius: 10px; color: #fff; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; padding: 12px 28px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; width: 100%; margin-top: 6px; }
   .add-btn:hover { background: #cc9500; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(230,168,0,0.35); }
   .add-btn:active { transform: translateY(0); }
 
+  /* RECURRING */
+  .recurring-list { display: flex; flex-direction: column; gap: 8px; }
+  .recurring-item { background: #f4f5f7; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .recurring-info { flex: 1; min-width: 120px; }
+  .recurring-desc { font-size: 14px; color: #1a1a2e; margin-bottom: 3px; }
+  .recurring-meta { font-size: 11px; color: #9a9aaa; }
+  .recurring-badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: bold; background: rgba(230,168,0,0.15); color: #b38000; flex-shrink: 0; white-space: nowrap; }
+  .recurring-end-badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; font-weight: bold; background: rgba(74,158,255,0.15); color: #4a9eff; flex-shrink: 0; white-space: nowrap; }
+  .recurring-amount { font-size: 15px; font-weight: bold; flex-shrink: 0; }
+  .recurring-amount.expense { color: #ff4444; }
+  .recurring-amount.income  { color: #27ae60; }
+  .recurring-del { background: none; border: none; color: #c0c0cc; cursor: pointer; font-size: 20px; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; }
+  .recurring-del:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
+  .recurring-generate-btn { background: #fff; border: 1px solid #e0e0e8; border-radius: 8px; color: #1a1a2e; font-family: Arial, sans-serif; font-size: 11px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .recurring-generate-btn:hover { background: rgba(230,168,0,0.1); border-color: #e6a800; color: #b38000; }
+
   /* FILTERS */
-  .filters-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    background: #ffffff;
-    border: 1px solid #e0e0e8;
-    border-radius: 20px;
-    color: #9a9aaa;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-    padding: 7px 16px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-
-  .filter-btn.active { background: #1a1a2e; color: #ffffff; border-color: transparent; }
-
+  .filters-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-btn { background: #fff; border: 1px solid #e0e0e8; border-radius: 20px; color: #9a9aaa; font-family: Arial, sans-serif; font-size: 13px; padding: 7px 16px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+  .filter-btn.active { background: #1a1a2e; color: #fff; border-color: transparent; }
   .search-wrap { margin-left: auto; position: relative; }
-
-  .search-wrap input {
-    padding: 7px 14px 7px 32px;
-    font-size: 13px;
-    border-radius: 20px;
-    width: 180px;
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9a9aaa;
-    font-size: 13px;
-    pointer-events: none;
-  }
+  .search-wrap input { padding: 7px 14px 7px 32px; font-size: 13px; border-radius: 20px; width: 180px; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9a9aaa; font-size: 13px; pointer-events: none; }
 
   /* SECTION HEADER */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .section-title {
-    font-size: 11px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #9a9aaa;
-  }
-
-  .clear-btn {
-    background: #ffffff;
-    border: 1px solid #e0e0e8;
-    border-radius: 10px;
-    color: #1a1a2e;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    padding: 5px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .section-title { font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #9a9aaa; }
+  .btn-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .toolbar-btn { background: #fff; border: 1px solid #e0e0e8; border-radius: 10px; color: #1a1a2e; font-family: Arial, sans-serif; font-size: 12px; padding: 5px 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .toolbar-btn:hover { background: rgba(230,168,0,0.1); border-color: #e6a800; color: #b38000; }
+  .clear-btn { background: #fff; border: 1px solid #e0e0e8; border-radius: 10px; color: #1a1a2e; font-family: Arial, sans-serif; font-size: 12px; padding: 5px 12px; cursor: pointer; transition: all 0.2s; }
   .clear-btn:hover { border-color: #ff4444; color: #ff4444; }
+  .drive-btn.connected { background: rgba(39,174,96,0.1); border-color: #27ae60; color: #27ae60; }
 
-  .toolbar-btn {
-    background: #ffffff;
-    border: 1px solid #e0e0e8;
-    border-radius: 10px;
-    color: #1a1a2e;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    padding: 5px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
+  /* EXPORT DROPDOWN */
+  .export-wrap { position: relative; }
+  .export-menu { display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid #e0e0e8; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 50; min-width: 160px; overflow: hidden; }
+  .export-menu.open { display: block; }
+  .export-menu button { display: block; width: 100%; background: none; border: none; border-bottom: 1px solid #f0f0f5; color: #1a1a2e; font-family: Arial, sans-serif; font-size: 13px; padding: 10px 16px; cursor: pointer; text-align: left; transition: background 0.15s; }
+  .export-menu button:last-child { border-bottom: none; }
+  .export-menu button:hover { background: #f4f5f7; }
 
-  .toolbar-btn:hover {
-    background: rgba(230,168,0,0.1);
-    border-color: #e6a800;
-    color: #b38000;
-  }
-
-  .drive-btn.connected {
-    background: rgba(39,174,96,0.1);
-    border-color: #27ae60;
-    color: #27ae60;
-  }
-
-  /* TRANSACTION LIST */
+  /* TRANSACTIONS */
   .transactions-list { display: flex; flex-direction: column; gap: 8px; }
-
-  .transaction-item {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    border-left: 4px solid transparent;
-    animation: slideIn 0.25s ease;
-    transition: transform 0.15s;
-  }
-
+  .transaction-item { background: #fff; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid transparent; animation: slideIn 0.25s ease; transition: transform 0.15s; }
   .transaction-item.income  { border-left-color: #27ae60; }
   .transaction-item.expense { border-left-color: #ff4444; }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
+  .transaction-item.recurring-tx { border-left-style: dashed; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
   .transaction-item:hover { transform: translateX(3px); }
-
-  .tx-icon {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-
+  .tx-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .tx-info { flex: 1; min-width: 0; }
-
-  .tx-desc {
-    font-size: 15px;
-    color: #1a1a2e;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-  }
-
-  .tx-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .tx-cat-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: bold;
-  }
-
+  .tx-desc { font-size: 15px; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+  .tx-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tx-cat-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: bold; }
   .tx-date-label { font-size: 10px; color: #9a9aaa; }
-
-  .tx-amount {
-    font-size: 16px;
-    font-weight: bold;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
+  .tx-rec-badge { font-size: 9px; padding: 2px 6px; border-radius: 10px; background: rgba(230,168,0,0.15); color: #b38000; font-weight: bold; }
+  .tx-amount { font-size: 16px; font-weight: bold; text-align: right; flex-shrink: 0; }
   .tx-amount.income  { color: #27ae60; }
   .tx-amount.expense { color: #ff4444; }
-
-  .tx-delete {
-    background: none;
-    border: none;
-    color: #c0c0cc;
-    cursor: pointer;
-    font-size: 20px;
-    padding: 2px 6px;
-    border-radius: 8px;
-    line-height: 1;
-    transition: color 0.2s, background 0.2s;
-    flex-shrink: 0;
-  }
-
+  .tx-delete { background: none; border: none; color: #c0c0cc; cursor: pointer; font-size: 20px; padding: 2px 6px; border-radius: 8px; line-height: 1; transition: color 0.2s, background 0.2s; flex-shrink: 0; }
   .tx-delete:hover { color: #1a1a2e; background: #f0f0f5; }
 
-  /* CATEGORY BADGE COLORS — matching ToDo tag style */
+  /* CATEGORY COLORS */
   .cat-food          { background: rgba(255,107,61,0.15); color: #ff6b3d; }
   .cat-transport     { background: rgba(74,158,255,0.15); color: #4a9eff; }
   .cat-health        { background: rgba(39,174,96,0.15);  color: #27ae60; }
@@ -430,102 +202,57 @@
 
   /* MONTH GROUP */
   .month-group { margin-bottom: 8px; }
+  .month-label { font-size: 11px; color: #9a9aaa; letter-spacing: 2px; text-transform: uppercase; padding: 10px 4px 6px; border-bottom: 1px solid #e0e0e8; margin-bottom: 8px; display: flex; justify-content: space-between; }
 
-  .month-label {
-    font-size: 11px;
-    color: #9a9aaa;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 10px 4px 6px;
-    border-bottom: 1px solid #e0e0e8;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  /* EMPTY STATE */
-  .empty-state { text-align: center; padding: 50px 20px; color: #9a9aaa; }
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 40px 20px; color: #9a9aaa; }
   .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
   .empty-state p { font-size: 13px; letter-spacing: 1px; }
 
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: #1a1a2e;
-    border-radius: 30px;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-    padding: 10px 22px;
-    opacity: 0;
-    transition: all 0.3s;
-    pointer-events: none;
-    z-index: 100;
-    white-space: nowrap;
-  }
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 16px; padding: 28px; max-width: 500px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.15); animation: modalIn 0.2s ease; max-height: 90vh; overflow-y: auto; }
+  @keyframes modalIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+  .modal h3 { font-size: 18px; font-weight: 900; color: #1a1a2e; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 20px; }
+  .modal-btn-primary { flex: 1; background: #e6a800; border: none; border-radius: 10px; color: #fff; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; padding: 12px; cursor: pointer; transition: background 0.2s; }
+  .modal-btn-primary:hover { background: #cc9500; }
+  .modal-btn-cancel { flex: 1; background: #f4f5f7; border: 1px solid #e0e0e8; border-radius: 10px; color: #9a9aaa; font-family: Arial, sans-serif; font-size: 14px; padding: 12px; cursor: pointer; }
+  .modal-note { font-size: 12px; color: #9a9aaa; background: #f4f5f7; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.5; }
 
+  /* TOAST */
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a2e; border-radius: 30px; color: #fff; font-family: Arial, sans-serif; font-size: 13px; padding: 10px 22px; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 300; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* RESPONSIVE */
   @media (max-width: 640px) {
-    .stats-grid { grid-template-columns: 1fr; }
+    .stats-grid, .proj-summary { grid-template-columns: 1fr; }
     .form-row, .form-row.three { grid-template-columns: 1fr; }
     header { flex-direction: column; gap: 10px; }
     .header-date { text-align: left; }
     .search-wrap { margin-left: 0; width: 100%; }
     .search-wrap input { width: 100%; }
+    .donut-wrap { flex-direction: column; }
+    .proj-month-row { flex-wrap: wrap; }
   }
 </style>
 </head>
 <body>
-
 <div class="app">
 
   <!-- HEADER -->
   <header>
     <div class="header-left">
       <h1>Gider<span>Takip</span></h1>
-      <p id="headerSub">GELİR & GİDER TAKİP SİSTEMİ</p>
+      <p>GELİR &amp; GİDER TAKİP SİSTEMİ</p>
     </div>
-    <div class="header-date" id="headerDate"></div>
+
   </header>
-
-  <!-- STATS -->
-  <div class="stats-grid">
-    <div class="stat-card total">
-      <div class="stat-label">Net Bakiye</div>
-      <div class="stat-amount" id="totalBalance">₺0</div>
-      <div class="stat-sub" id="totalSub">Tüm zamanlar</div>
-    </div>
-    <div class="stat-card income">
-      <div class="stat-label">Toplam Gelir</div>
-      <div class="stat-amount" id="totalIncome">₺0</div>
-      <div class="stat-sub" id="incomeSub">Bu ay: ₺0</div>
-    </div>
-    <div class="stat-card expense">
-      <div class="stat-label">Toplam Gider</div>
-      <div class="stat-amount" id="totalExpense">₺0</div>
-      <div class="stat-sub" id="expenseSub">Bu ay: ₺0</div>
-    </div>
-  </div>
-
-  <!-- CHART -->
-  <div class="chart-panel">
-    <div class="panel-title">Kategori Dağılımı</div>
-    <div class="chart-bars" id="chartBars">
-      <div class="empty-state" style="flex:1;padding:20px 0;">
-        <p>Henüz işlem yok</p>
-      </div>
-    </div>
-  </div>
 
   <!-- ADD FORM -->
   <div class="add-panel">
     <div class="panel-title">Yeni İşlem Ekle</div>
-
     <div class="form-row">
       <div class="form-group">
         <label>Açıklama</label>
@@ -536,7 +263,6 @@
         <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
       </div>
     </div>
-
     <div class="form-row three">
       <div class="form-group">
         <label>Tür</label>
@@ -563,16 +289,106 @@
         <input type="date" id="txDate">
       </div>
     </div>
-
     <button class="add-btn" onclick="addTransaction()">İŞLEM EKLE</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">Net Bakiye</div>
+      <div class="stat-amount" id="totalBalance">₺0</div>
+      <div class="stat-sub" id="balanceSub">Tüm zamanlar</div>
+      <input type="date" id="balanceDate" style="margin-top:8px;font-size:11px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e8;background:#f4f5f7;color:#1a1a2e;width:100%;outline:none;" onchange="updateStats()" title="Bu tarihe kadarki net bakiye">
+    </div>
+    <div class="stat-card income">
+      <div class="stat-label">Toplam Gelir</div>
+      <div class="stat-amount" id="totalIncome">₺0</div>
+      <div class="stat-sub" id="incomeSub">Bu ay: ₺0</div>
+    </div>
+    <div class="stat-card expense">
+      <div class="stat-label">Toplam Gider</div>
+      <div class="stat-amount" id="totalExpense">₺0</div>
+      <div class="stat-sub" id="expenseSub">Bu ay: ₺0</div>
+    </div>
+  </div>
+
+  <!-- RECURRING -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🔄 Tekrarlayan İşlemler</div>
+      <button class="toolbar-btn" onclick="openRecurringModal()">+ Ekle</button>
+    </div>
+    <div class="recurring-list" id="recurringList">
+      <div class="empty-state" style="padding:16px 0;"><p>Henüz tekrarlayan işlem yok</p></div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="panel">
+    <div class="panel-title">Grafikler</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchChart('category',this)">Kategori</button>
+      <button class="tab-btn" onclick="switchChart('monthly',this)">Aylık Karşılaştırma</button>
+      <button class="tab-btn" onclick="switchChart('donut',this)">Pasta Grafik</button>
+    </div>
+    <div id="chartCategory">
+      <div class="chart-bars" id="categoryBars"><div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div></div>
+    </div>
+    <div id="chartMonthly" style="display:none">
+      <div class="chart-legend-row"><span class="legend-inc">Gelir</span><span class="legend-exp">Gider</span></div>
+      <div class="monthly-chart" id="monthlyBars"><div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz işlem yok</p></div></div>
+    </div>
+    <div id="chartDonut" style="display:none">
+      <div id="donutWrap" class="donut-wrap"><div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div></div>
+    </div>
+  </div>
+
+  <!-- PROJEKSİYON -->
+  <div class="panel">
+    <div class="panel-title">📈 Projeksiyon — Belirli Tarihe Kadar Durum</div>
+    <div class="proj-input-row">
+      <div class="form-group">
+        <label>Başlangıç Tarihi</label>
+        <input type="date" id="projStart">
+      </div>
+      <div class="form-group">
+        <label>Hedef Tarih</label>
+        <input type="date" id="projEnd">
+      </div>
+      <button class="proj-calc-btn" onclick="calcProjection()">Hesapla →</button>
+    </div>
+    <div class="proj-result" id="projResult">
+      <div class="proj-verdict" id="projVerdict"></div>
+      <div class="proj-summary">
+        <div class="proj-card inc-card">
+          <div class="proj-card-label">Toplam Gelir</div>
+          <div class="proj-card-amount" id="projIncome">₺0</div>
+          <div class="proj-card-sub" id="projIncomeSub"></div>
+        </div>
+        <div class="proj-card exp-card">
+          <div class="proj-card-label">Toplam Gider</div>
+          <div class="proj-card-amount" id="projExpense">₺0</div>
+          <div class="proj-card-sub" id="projExpenseSub"></div>
+        </div>
+        <div class="proj-card" id="projBalanceCard">
+          <div class="proj-card-label">Net Bakiye</div>
+          <div class="proj-card-amount" id="projBalance">₺0</div>
+          <div class="proj-card-sub" id="projBalanceSub"></div>
+        </div>
+      </div>
+      <div class="proj-monthly">
+        <div class="proj-monthly-title">Aylık Dağılım</div>
+        <div id="projMonthlyRows"></div>
+      </div>
+    </div>
   </div>
 
   <!-- FILTERS -->
   <div class="filters-bar">
-    <button class="filter-btn active" onclick="setFilter('all', this)">Tümü</button>
-    <button class="filter-btn" onclick="setFilter('expense', this)">Giderler</button>
-    <button class="filter-btn" onclick="setFilter('income', this)">Gelirler</button>
-    <button class="filter-btn" onclick="setFilter('month', this)">Bu Ay</button>
+    <button class="filter-btn active" onclick="setFilter('all',this)">Tümü</button>
+    <button class="filter-btn" onclick="setFilter('expense',this)">Giderler</button>
+    <button class="filter-btn" onclick="setFilter('income',this)">Gelirler</button>
+    <button class="filter-btn" onclick="setFilter('month',this)">Bu Ay</button>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="Ara..." oninput="renderList()">
@@ -583,12 +399,19 @@
   <div>
     <div class="section-header">
       <span class="section-title" id="listTitle">İşlemler</span>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <div class="btn-row">
         <button class="toolbar-btn drive-btn" id="driveAuthBtn" onclick="driveSignIn()">🔗 Drive Bağla</button>
         <button class="toolbar-btn" id="driveSaveBtn" onclick="saveToDrive()" style="display:none">☁️ Drive'a Kaydet</button>
         <button class="toolbar-btn" id="driveLoadBtn" onclick="loadFromDrive()" style="display:none">📂 Drive'dan Yükle</button>
-        <button class="toolbar-btn" onclick="exportJSON()" title="JSON olarak dışa aktar">📤 Dışa Aktar</button>
-        <button class="toolbar-btn" onclick="document.getElementById('importFile').click()" title="JSON içe aktar">📥 İçe Aktar</button>
+        <div class="export-wrap">
+          <button class="toolbar-btn" onclick="toggleExportMenu(event)">📤 Dışa Aktar ▾</button>
+          <div class="export-menu" id="exportMenu">
+            <button onclick="exportJSON();closeExportMenu()">📄 JSON</button>
+            <button onclick="exportCSV();closeExportMenu()">📊 CSV</button>
+            <button onclick="exportExcel();closeExportMenu()">📗 Excel (.xls)</button>
+          </div>
+        </div>
+        <button class="toolbar-btn" onclick="document.getElementById('importFile').click()">📥 İçe Aktar</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
         <button class="clear-btn" onclick="clearAll()">Tümünü Sil</button>
       </div>
@@ -598,468 +421,771 @@
 
 </div>
 
+<!-- RECURRING MODAL -->
+<div class="modal-overlay" id="recurringModal">
+  <div class="modal">
+    <h3 id="rModalTitle">🔄 Tekrarlayan İşlem Ekle</h3>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Açıklama</label>
+      <input type="text" id="rDesc" placeholder="Kira, Maaş, Netflix...">
+    </div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group">
+        <label>Tutar (₺)</label>
+        <input type="number" id="rAmount" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Tür</label>
+        <div class="type-toggle">
+          <button class="type-btn active-expense" id="rBtnExpense" onclick="setRType('expense')">— Gider</button>
+          <button class="type-btn" id="rBtnIncome" onclick="setRType('income')">+ Gelir</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group">
+        <label>Kategori</label>
+        <select id="rCategory">
+          <option value="food">🍔 Yemek</option>
+          <option value="transport">🚗 Ulaşım</option>
+          <option value="health">💊 Sağlık</option>
+          <option value="entertainment">🎮 Eğlence</option>
+          <option value="shopping">🛍️ Alışveriş</option>
+          <option value="bills">💡 Faturalar</option>
+          <option value="salary">💼 Maaş</option>
+          <option value="other">📦 Diğer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tekrar Sıklığı</label>
+        <select id="rFreq">
+          <option value="monthly">Her Ay</option>
+          <option value="quarterly">3 Ayda 1</option>
+          <option value="weekly">Her Hafta</option>
+          <option value="yearly">Her Yıl</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group">
+        <label>Başlangıç Tarihi</label>
+        <input type="date" id="rStartDate">
+      </div>
+      <div class="form-group">
+        <label>Bitiş Tarihi (opsiyonel)</label>
+        <input type="date" id="rEndDate">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>Aylık ise — Ayın kaçı?</label>
+      <input type="number" id="rDay" placeholder="1-31" min="1" max="31" value="1">
+    </div>
+    <div class="modal-note">
+      💡 "Toplu Oluştur" butonuyla başlangıç tarihinden bitiş tarihine kadar tüm işlemler tek seferde listeye eklenir.
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="rSaveBtn" onclick="saveRecurring()">💾 Kaydet</button>
+      <button class="modal-btn-primary" id="rGenerateBtn" style="background:#4a9eff;" onclick="saveAndGenerate()">⚡ Kaydet &amp; Toplu Oluştur</button>
+      <button class="modal-btn-cancel" onclick="closeRecurringModal()">İptal</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== STATE =====
+// ===== DATA =====
 let transactions = JSON.parse(localStorage.getItem('gider_txns') || '[]');
-let currentType = 'expense';
+let recurrings   = JSON.parse(localStorage.getItem('gider_rec')  || '[]');
+let currentType  = 'expense';
+let rType        = 'expense';
 let currentFilter = 'all';
+let activeChart  = 'category';
+let editingRecurringId = null; // düzenleme modu için
 
-const CATEGORIES = {
-  food:          { label: 'Yemek',      icon: '🍔', cls: 'cat-food' },
-  transport:     { label: 'Ulaşım',     icon: '🚗', cls: 'cat-transport' },
-  health:        { label: 'Sağlık',     icon: '💊', cls: 'cat-health' },
-  entertainment: { label: 'Eğlence',    icon: '🎮', cls: 'cat-entertainment' },
-  shopping:      { label: 'Alışveriş',  icon: '🛍️', cls: 'cat-shopping' },
-  bills:         { label: 'Faturalar',  icon: '💡', cls: 'cat-bills' },
-  salary:        { label: 'Maaş',       icon: '💼', cls: 'cat-salary' },
-  other:         { label: 'Diğer',      icon: '📦', cls: 'cat-other' },
+const CATS = {
+  food:          { label:'Yemek',     icon:'🍔', cls:'cat-food',          color:'#ff6b3d' },
+  transport:     { label:'Ulaşım',    icon:'🚗', cls:'cat-transport',     color:'#4a9eff' },
+  health:        { label:'Sağlık',    icon:'💊', cls:'cat-health',        color:'#27ae60' },
+  entertainment: { label:'Eğlence',   icon:'🎮', cls:'cat-entertainment', color:'#9b59b6' },
+  shopping:      { label:'Alışveriş', icon:'🛍️', cls:'cat-shopping',      color:'#e84099' },
+  bills:         { label:'Faturalar', icon:'💡', cls:'cat-bills',         color:'#ff4444' },
+  salary:        { label:'Maaş',      icon:'💼', cls:'cat-salary',        color:'#e6a800' },
+  other:         { label:'Diğer',     icon:'📦', cls:'cat-other',         color:'#9a9aaa' },
 };
+const FREQ = { monthly:'Her Ay', quarterly:'3 Ayda 1', weekly:'Her Hafta', yearly:'Her Yıl' };
 
 // ===== INIT =====
 function init() {
-  // Set date
   const now = new Date();
-  document.getElementById('headerDate').innerHTML =
-    now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
-    + '<br>' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+  document.getElementById('txDate').value   = now.toISOString().split('T')[0];
+  document.getElementById('rStartDate').value = now.toISOString().split('T')[0];
 
-  document.getElementById('txDate').value = now.toISOString().split('T')[0];
+  // Projeksiyon: varsayılan başlangıç = bugün, bitiş = 6 ay sonra
+  document.getElementById('projStart').value = now.toISOString().split('T')[0];
+  const sixMonths = new Date(now.getFullYear(), now.getMonth()+6, now.getDate());
+  document.getElementById('projEnd').value = sixMonths.toISOString().split('T')[0];
 
-  updateStats();
-  updateChart();
-  renderList();
+  updateStats(); updateChart(); renderRecurring(); renderList();
 }
 
-// ===== TYPE TOGGLE =====
-function setType(type) {
-  currentType = type;
-  const btnE = document.getElementById('btnExpense');
-  const btnI = document.getElementById('btnIncome');
-  btnE.className = 'type-btn' + (type === 'expense' ? ' active-expense' : '');
-  btnI.className = 'type-btn' + (type === 'income' ? ' active-income' : '');
+// ===== PROJECTION =====
+function calcProjection() {
+  const startStr = document.getElementById('projStart').value;
+  const endStr   = document.getElementById('projEnd').value;
+  if (!startStr || !endStr) { showToast('⚠️ Başlangıç ve bitiş tarihi seçin'); return; }
+  if (endStr <= startStr)   { showToast('⚠️ Bitiş tarihi başlangıçtan sonra olmalı'); return; }
+
+  const start = new Date(startStr + 'T00:00:00');
+  const end   = new Date(endStr   + 'T00:00:00');
+
+  // Mevcut işlemler + tekrarlayan projeksiyon
+  const allTx = [...transactions, ...generateProjectionTx(startStr, endStr)];
+
+  // Aralıktaki işlemleri filtrele
+  const inRange = allTx.filter(t => t.date >= startStr && t.date <= endStr);
+
+  const totalInc = inRange.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp = inRange.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance  = totalInc - totalExp;
+
+  // Kart güncelle
+  document.getElementById('projIncome').textContent  = fmt(totalInc);
+  document.getElementById('projExpense').textContent = fmt(totalExp);
+  document.getElementById('projBalance').textContent = fmt(balance);
+  document.getElementById('projIncomeSub').textContent  = inRange.filter(t=>t.type==='income').length + ' işlem';
+  document.getElementById('projExpenseSub').textContent = inRange.filter(t=>t.type==='expense').length + ' işlem';
+
+  const balCard = document.getElementById('projBalanceCard');
+  balCard.className = 'proj-card ' + (balance >= 0 ? 'balance-pos' : 'balance-neg');
+  document.getElementById('projBalanceSub').textContent = balance >= 0 ? '✓ Artıda' : '✗ Eksikde';
+
+  // Verdict
+  const endDateStr = new Date(endStr).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+  const verdict = document.getElementById('projVerdict');
+  if (balance >= 0) {
+    verdict.className = 'proj-verdict pos';
+    verdict.innerHTML = `✅ ${endDateStr} tarihinde kasa <strong>${fmt(balance)}</strong> artıda olacak`;
+  } else {
+    verdict.className = 'proj-verdict neg';
+    verdict.innerHTML = `⚠️ ${endDateStr} tarihinde kasa <strong>${fmt(Math.abs(balance))}</strong> ekside olacak`;
+  }
+
+  // Aylık dağılım
+  const months = getMonthsBetween(startStr, endStr);
+  let cumulative = 0;
+  const maxMonthTotal = Math.max(...months.map(m => {
+    const mInc = inRange.filter(t=>t.type==='income'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0);
+    const mExp = inRange.filter(t=>t.type==='expense'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0);
+    return Math.max(mInc, mExp);
+  }), 1);
+
+  const rows = months.map(m => {
+    const mInc = inRange.filter(t=>t.type==='income'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0);
+    const mExp = inRange.filter(t=>t.type==='expense'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0);
+    const net  = mInc - mExp;
+    cumulative += net;
+    const incW = Math.round((mInc/maxMonthTotal)*100);
+    const expW = Math.round((mExp/maxMonthTotal)*100);
+    const [y,mo] = m.split('-');
+    const mName = new Date(y,mo-1).toLocaleDateString('tr-TR',{month:'short',year:'2-digit'});
+    return `<div class="proj-month-row">
+      <div class="proj-month-name">${mName}</div>
+      <div class="proj-month-bar-wrap">
+        <div class="proj-month-bar-inc" style="width:${incW}%"></div>
+      </div>
+      <div class="proj-month-bar-wrap" style="margin-left:4px;">
+        <div class="proj-month-bar-exp" style="width:${expW}%"></div>
+      </div>
+      <div class="proj-month-net ${net>=0?'pos':'neg'}">${net>=0?'+':''}${fmt(net)}</div>
+      <div class="proj-cumulative" title="Kümülatif">${fmt(cumulative)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('projMonthlyRows').innerHTML = rows || '<div style="color:#9a9aaa;font-size:13px;padding:10px 0;">Bu aralıkta işlem yok</div>';
+  document.getElementById('projResult').classList.add('visible');
 }
 
-// ===== ADD TRANSACTION =====
+// Projeksiyon için tekrarlayan işlemleri hesapla (listeye eklemeden)
+function generateProjectionTx(startStr, endStr) {
+  const result = [];
+  recurrings.forEach(r => {
+    const rStart = r.startDate || startStr;
+    const rEnd   = r.endDate   || endStr;
+    const from   = rStart > startStr ? rStart : startStr;
+    const to     = rEnd   < endStr   ? rEnd   : endStr;
+    if (from > to) return;
+
+    // Zaten listeye eklenmiş olanları çıkart (duplicate olmasın)
+    const existingDates = new Set(
+      transactions.filter(t=>t.recurringId===r.id).map(t=>t.date)
+    );
+
+    if (r.freq === 'monthly') {
+      let d = new Date(from + 'T00:00:00');
+      const toDate = new Date(to + 'T00:00:00');
+      // İlk ay başlangıcına git
+      d = new Date(d.getFullYear(), d.getMonth(), Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+      while (d <= toDate) {
+        const ds = d.toISOString().split('T')[0];
+        if (ds >= from && !existingDates.has(ds)) {
+          result.push({ id: 'proj_'+r.id+'_'+ds, desc:r.desc, amount:r.amount, category:r.category, type:r.type, date:ds, recurring:true, projection:true });
+        }
+        d = new Date(d.getFullYear(), d.getMonth()+1, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+2,0).getDate()));
+      }
+    } else if (r.freq === 'quarterly') {
+      let d = new Date(from + 'T00:00:00');
+      const toDate = new Date(to + 'T00:00:00');
+      d = new Date(d.getFullYear(), d.getMonth(), Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+      while (d <= toDate) {
+        const ds = d.toISOString().split('T')[0];
+        if (ds >= from && !existingDates.has(ds)) {
+          result.push({ id:'proj_'+r.id+'_'+ds, desc:r.desc, amount:r.amount, category:r.category, type:r.type, date:ds, recurring:true, projection:true });
+        }
+        d = new Date(d.getFullYear(), d.getMonth()+3, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+4,0).getDate()));
+      }
+    } else if (r.freq === 'weekly') {
+      let d = new Date(from + 'T00:00:00');
+      const toDate = new Date(to + 'T00:00:00');
+      while (d <= toDate) {
+        const ds = d.toISOString().split('T')[0];
+        if (!existingDates.has(ds)) {
+          result.push({ id:'proj_'+r.id+'_'+ds, desc:r.desc, amount:r.amount, category:r.category, type:r.type, date:ds, recurring:true, projection:true });
+        }
+        d = new Date(d.getTime() + 7*86400000);
+      }
+    } else if (r.freq === 'yearly') {
+      let d = new Date(from + 'T00:00:00');
+      const toDate = new Date(to + 'T00:00:00');
+      while (d <= toDate) {
+        const ds = d.toISOString().split('T')[0];
+        if (!existingDates.has(ds)) {
+          result.push({ id:'proj_'+r.id+'_'+ds, desc:r.desc, amount:r.amount, category:r.category, type:r.type, date:ds, recurring:true, projection:true });
+        }
+        d = new Date(d.getFullYear()+1, d.getMonth(), d.getDate());
+      }
+    }
+  });
+  return result;
+}
+
+function getMonthsBetween(startStr, endStr) {
+  const months = [];
+  let [sy, sm] = startStr.split('-').map(Number);
+  const [ey, em] = endStr.split('-').map(Number);
+  while (sy < ey || (sy === ey && sm <= em)) {
+    months.push(`${sy}-${String(sm).padStart(2,'0')}`);
+    sm++; if (sm > 12) { sm = 1; sy++; }
+  }
+  return months;
+}
+
+// ===== RECURRING MODAL =====
+function openRecurringModal() {
+  editingRecurringId = null;
+  document.getElementById('rModalTitle').textContent = '🔄 Tekrarlayan İşlem Ekle';
+  document.getElementById('rSaveBtn').textContent = '💾 Kaydet';
+  document.getElementById('rGenerateBtn').style.display = '';
+  document.getElementById('recurringModal').classList.add('open');
+}
+
+function openEditRecurringModal(id) {
+  id = String(id);
+  const r = recurrings.find(x => String(x.id) === id);
+  if (!r) return;
+  editingRecurringId = r.id;
+
+  document.getElementById('rModalTitle').textContent = '✏️ Tekrarlayan İşlemi Düzenle';
+  document.getElementById('rSaveBtn').textContent = '💾 Güncelle';
+  document.getElementById('rGenerateBtn').style.display = 'none';
+
+  document.getElementById('rDesc').value      = r.desc;
+  document.getElementById('rAmount').value    = r.amount;
+  document.getElementById('rCategory').value  = r.category;
+  document.getElementById('rFreq').value      = r.freq;
+  document.getElementById('rDay').value       = r.day || 1;
+  document.getElementById('rStartDate').value = r.startDate || '';
+  document.getElementById('rEndDate').value   = r.endDate   || '';
+  setRType(r.type);
+
+  document.getElementById('recurringModal').classList.add('open');
+}
+
+function closeRecurringModal() {
+  editingRecurringId = null;
+  document.getElementById('recurringModal').classList.remove('open');
+  ['rDesc','rAmount','rDay'].forEach(id => document.getElementById(id).value = id==='rDay'?'1':'');
+  document.getElementById('rEndDate').value   = '';
+  document.getElementById('rStartDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('rGenerateBtn').style.display = '';
+  setRType('expense');
+}
+function setRType(t) {
+  rType = t;
+  document.getElementById('rBtnExpense').className = 'type-btn'+(t==='expense'?' active-expense':'');
+  document.getElementById('rBtnIncome').className  = 'type-btn'+(t==='income' ?' active-income' :'');
+}
+
+function getRecurringFormData() {
+  const desc      = document.getElementById('rDesc').value.trim();
+  const amount    = parseFloat(document.getElementById('rAmount').value);
+  const cat       = document.getElementById('rCategory').value;
+  const freq      = document.getElementById('rFreq').value;
+  const day       = parseInt(document.getElementById('rDay').value)||1;
+  const startDate = document.getElementById('rStartDate').value;
+  const endDate   = document.getElementById('rEndDate').value;
+  return { desc, amount, cat, freq, day, startDate, endDate };
+}
+
+function saveRecurring() {
+  const { desc, amount, cat, freq, day, startDate, endDate } = getRecurringFormData();
+  if (!desc)             { showToast('⚠️ Açıklama girin'); return; }
+  if (!amount||amount<=0){ showToast('⚠️ Geçerli tutar girin'); return; }
+  if (!startDate)        { showToast('⚠️ Başlangıç tarihi seçin'); return; }
+
+  if (editingRecurringId !== null) {
+    // GÜNCELLE
+    const idx = recurrings.findIndex(r => String(r.id) === String(editingRecurringId));
+    if (idx === -1) return;
+    recurrings[idx] = { ...recurrings[idx], desc, amount, category:cat, type:rType, freq, day, startDate, endDate: endDate||null };
+    localStorage.setItem('gider_rec', JSON.stringify(recurrings));
+    renderRecurring(); closeRecurringModal();
+    showToast('✓ Tekrarlayan işlem güncellendi');
+  } else {
+    // YENİ EKLE
+    const r = { id:Date.now(), desc, amount, category:cat, type:rType, freq, day, startDate, endDate: endDate||null, lastApplied:'' };
+    recurrings.push(r);
+    localStorage.setItem('gider_rec', JSON.stringify(recurrings));
+    renderRecurring(); closeRecurringModal();
+    showToast('✓ Tekrarlayan işlem kaydedildi');
+  }
+}
+
+function saveAndGenerate() {
+  const { desc, amount, cat, freq, day, startDate, endDate } = getRecurringFormData();
+  if (!desc)            { showToast('⚠️ Açıklama girin'); return; }
+  if (!amount||amount<=0){ showToast('⚠️ Geçerli tutar girin'); return; }
+  if (!startDate)       { showToast('⚠️ Başlangıç tarihi seçin'); return; }
+  if (!endDate)         { showToast('⚠️ Toplu oluşturma için bitiş tarihi gerekli'); return; }
+  if (endDate <= startDate){ showToast('⚠️ Bitiş tarihi başlangıçtan sonra olmalı'); return; }
+
+  const r = { id:Date.now(), desc, amount, category:cat, type:rType, freq, day, startDate, endDate, lastApplied:'' };
+  recurrings.push(r);
+  localStorage.setItem('gider_rec', JSON.stringify(recurrings));
+
+  // Toplu oluştur
+  const generated = generateDates(r, startDate, endDate);
+  const existingIds = new Set(transactions.map(t=>t.id));
+  let added = 0;
+  generated.forEach(dateStr => {
+    const id = r.id + '_' + dateStr;
+    if (!existingIds.has(id)) {
+      transactions.push({ id, desc, amount, category:cat, type:rType, date:dateStr, recurring:true, recurringId:r.id });
+      added++;
+    }
+  });
+  transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+  save(); updateStats(); updateChart(); renderRecurring(); renderList();
+  closeRecurringModal();
+  showToast(`✓ ${added} işlem oluşturuldu (${startDate} → ${endDate})`);
+}
+
+function generateForRecurring(rid) {
+  rid = String(rid);
+  const r = recurrings.find(x => String(x.id) === rid);
+  if (!r) return;
+  if (!r.endDate) { showToast('⚠️ Bitiş tarihi olmayan işlem toplu oluşturulamaz'); return; }
+  const generated = generateDates(r, r.startDate, r.endDate);
+  const existingIds = new Set(transactions.map(t => String(t.id)));
+  let added = 0;
+  generated.forEach(dateStr => {
+    const id = r.id + '_' + dateStr;
+    if (!existingIds.has(String(id))) {
+      transactions.push({ id, desc:r.desc, amount:r.amount, category:r.category, type:r.type, date:dateStr, recurring:true, recurringId:r.id });
+      added++;
+    }
+  });
+  transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+  save(); updateStats(); updateChart(); renderRecurring(); renderList();
+  showToast(`✓ ${added} yeni işlem eklendi`);
+}
+
+function generateDates(r, fromStr, toStr) {
+  const dates = [];
+  const toDate = new Date(toStr + 'T00:00:00');
+  if (r.freq === 'monthly') {
+    let d = new Date(fromStr + 'T00:00:00');
+    d = new Date(d.getFullYear(), d.getMonth(), Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+    if (d < new Date(fromStr + 'T00:00:00')) d = new Date(d.getFullYear(), d.getMonth()+1, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+2,0).getDate()));
+    while (d <= toDate) {
+      dates.push(d.toISOString().split('T')[0]);
+      d = new Date(d.getFullYear(), d.getMonth()+1, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+2,0).getDate()));
+    }
+  } else if (r.freq === 'quarterly') {
+    let d = new Date(fromStr + 'T00:00:00');
+    d = new Date(d.getFullYear(), d.getMonth(), Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+    if (d < new Date(fromStr + 'T00:00:00')) d = new Date(d.getFullYear(), d.getMonth()+3, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+4,0).getDate()));
+    while (d <= toDate) {
+      dates.push(d.toISOString().split('T')[0]);
+      d = new Date(d.getFullYear(), d.getMonth()+3, Math.min(r.day||1, new Date(d.getFullYear(),d.getMonth()+4,0).getDate()));
+    }
+  } else if (r.freq === 'weekly') {
+    let d = new Date(fromStr + 'T00:00:00');
+    while (d <= toDate) { dates.push(d.toISOString().split('T')[0]); d = new Date(d.getTime()+7*86400000); }
+  } else if (r.freq === 'yearly') {
+    let d = new Date(fromStr + 'T00:00:00');
+    while (d <= toDate) { dates.push(d.toISOString().split('T')[0]); d = new Date(d.getFullYear()+1,d.getMonth(),d.getDate()); }
+  }
+  return dates;
+}
+
+function deleteRecurring(id) {
+  id = String(id);
+  const txCount = transactions.filter(t => String(t.recurringId) === id).length;
+  if (txCount > 0) {
+    if (!confirm(`Tekrarlayan işlem tanımı silinsin mi?\n\nOluşturulan ${txCount} işlem listede kalmaya devam eder.\nTümünü birden silmek için "🗑️ Toplu Sil" butonunu kullanın.`)) return;
+  } else {
+    if (!confirm('Bu tekrarlayan işlem silinsin mi?')) return;
+  }
+  recurrings = recurrings.filter(r => String(r.id) !== id);
+  localStorage.setItem('gider_rec', JSON.stringify(recurrings));
+  renderRecurring();
+  showToast('Tanım silindi');
+}
+
+function deleteRecurringWithTx(id) {
+  id = String(id);
+  const txCount = transactions.filter(t => String(t.recurringId) === id).length;
+  if (!confirm(`Tekrarlayan işlem tanımı VE oluşturulan ${txCount} işlem silinsin mi?\n\nBu işlem geri alınamaz.`)) return;
+  recurrings = recurrings.filter(r => String(r.id) !== id);
+  transactions = transactions.filter(t => String(t.recurringId) !== id);
+  localStorage.setItem('gider_rec', JSON.stringify(recurrings));
+  save(); updateStats(); updateChart(); renderRecurring(); renderList();
+  showToast(`✓ Tanım ve ${txCount} işlem silindi`);
+}
+
+function renderRecurring() {
+  const el = document.getElementById('recurringList');
+  if (!recurrings.length) { el.innerHTML='<div class="empty-state" style="padding:16px 0;"><p>Henüz tekrarlayan işlem yok</p></div>'; return; }
+  el.innerHTML = recurrings.map(r => {
+    const cat  = CATS[r.category]||CATS.other;
+    const sign = r.type==='income'?'+':'-';
+    const endBadge = r.endDate ? `<div class="recurring-end-badge">📅 ${r.endDate}'e kadar</div>` : '';
+    const txCount = transactions.filter(t=>String(t.recurringId)===String(r.id)).length;
+    const countBadge = txCount > 0 ? `<span style="font-size:10px;color:#9a9aaa;white-space:nowrap;">${txCount} işlem</span>` : '';
+    return `<div class="recurring-item">
+      <div class="tx-icon ${cat.cls}">${cat.icon}</div>
+      <div class="recurring-info">
+        <div class="recurring-desc">${escHtml(r.desc)}</div>
+        <div class="recurring-meta">${cat.label} · ${FREQ[r.freq]} · ${r.startDate||''} ${r.endDate?'→ '+r.endDate:''}</div>
+      </div>
+      <div class="recurring-badge">${FREQ[r.freq]}</div>
+      ${endBadge}
+      ${countBadge}
+      <div class="recurring-amount ${r.type}">${sign}${fmt(r.amount)}</div>
+      <button class="recurring-generate-btn" onclick="generateForRecurring(${r.id})" title="Toplu oluştur">⚡ Toplu</button>
+      <button class="recurring-generate-btn" style="border-color:#4a9eff;color:#4a9eff;" onclick="openEditRecurringModal(${r.id})" title="Düzenle">✏️ Düzenle</button>
+      <button class="recurring-generate-btn" style="border-color:#ff4444;color:#ff4444;" onclick="deleteRecurringWithTx(${r.id})" title="Tanım + tüm işlemleri sil">🗑️ Toplu Sil</button>
+      <button class="recurring-del" onclick="deleteRecurring(${r.id})" title="Sadece tanımı sil">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ===== TYPE / FILTER =====
+function setType(t) {
+  currentType = t;
+  document.getElementById('btnExpense').className = 'type-btn'+(t==='expense'?' active-expense':'');
+  document.getElementById('btnIncome').className  = 'type-btn'+(t==='income' ?' active-income' :'');
+}
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderList();
+}
+
+// ===== ADD =====
 function addTransaction() {
   const desc   = document.getElementById('desc').value.trim();
   const amount = parseFloat(document.getElementById('amount').value);
   const cat    = document.getElementById('category').value;
   const date   = document.getElementById('txDate').value;
-
-  if (!desc) { showToast('⚠️ Açıklama girin'); return; }
-  if (!amount || amount <= 0) { showToast('⚠️ Geçerli tutar girin'); return; }
-  if (!date) { showToast('⚠️ Tarih seçin'); return; }
-
-  const tx = {
-    id: Date.now(),
-    desc, amount, category: cat, type: currentType, date,
-  };
-
-  transactions.unshift(tx);
-  save();
-  updateStats();
-  updateChart();
-  renderList();
-
+  if (!desc)             { showToast('⚠️ Açıklama girin'); return; }
+  if (!amount||amount<=0){ showToast('⚠️ Geçerli tutar girin'); return; }
+  if (!date)             { showToast('⚠️ Tarih seçin'); return; }
+  transactions.unshift({ id:Date.now(), desc, amount, category:cat, type:currentType, date });
+  save(); updateStats(); updateChart(); renderList();
   document.getElementById('desc').value = '';
   document.getElementById('amount').value = '';
-
-  showToast(currentType === 'expense' ? '✓ Gider eklendi' : '✓ Gelir eklendi');
+  showToast(currentType==='expense'?'✓ Gider eklendi':'✓ Gelir eklendi');
 }
 
 // ===== DELETE =====
 function deleteTransaction(id) {
-  transactions = transactions.filter(t => t.id !== id);
-  save();
-  updateStats();
-  updateChart();
-  renderList();
-  showToast('Silindi');
+  transactions = transactions.filter(t=>String(t.id)!==String(id));
+  save(); updateStats(); updateChart(); renderList(); showToast('Silindi');
 }
-
 function clearAll() {
   if (!transactions.length) return;
   if (!confirm('Tüm işlemler silinsin mi?')) return;
   transactions = [];
-  save();
-  updateStats();
-  updateChart();
-  renderList();
-  showToast('Tüm işlemler silindi');
-}
-
-// ===== GOOGLE DRIVE =====
-const CLIENT_ID  = '860410014740-gph7r4l4g81nn550vsid0d6lebj2l2cj.apps.googleusercontent.com';
-const SCOPES     = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
-const FILE_NAME  = 'gider-takip-veriler.json';
-
-let driveAccessToken = null;
-let driveFileId      = localStorage.getItem('drive_file_id') || null;
-let tokenClient      = null;
-
-// GIS + GAPI yüklenince başlat
-window.addEventListener('load', () => {
-  // GAPI yükle
-  const gapiInterval = setInterval(() => {
-    if (window.gapi) {
-      clearInterval(gapiInterval);
-      gapi.load('client', async () => {
-        await gapi.client.init({});
-        await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
-      });
-    }
-  }, 200);
-
-  // GIS token client
-  const gisInterval = setInterval(() => {
-    if (window.google && google.accounts) {
-      clearInterval(gisInterval);
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: onTokenReceived,
-      });
-    }
-  }, 200);
-});
-
-function driveSignIn() {
-  if (!tokenClient) { showToast('⚠️ Google API yükleniyor, bekleyin...'); return; }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
-function onTokenReceived(resp) {
-  if (resp.error) { showToast('⚠️ Giriş başarısız: ' + resp.error); return; }
-  driveAccessToken = resp.access_token;
-  gapi.client.setToken({ access_token: driveAccessToken });
-
-  const btn = document.getElementById('driveAuthBtn');
-  btn.textContent = '✅ Drive Bağlı';
-  btn.classList.add('connected');
-  document.getElementById('driveSaveBtn').style.display = '';
-  document.getElementById('driveLoadBtn').style.display = '';
-  showToast('✓ Google Drive bağlandı');
-}
-
-async function saveToDrive() {
-  if (!driveAccessToken) { showToast('⚠️ Önce Drive\'a bağlanın'); return; }
-  if (!transactions.length) { showToast('⚠️ Kaydedilecek işlem yok'); return; }
-
-  showToast('☁️ Drive\'a kaydediliyor...');
-
-  const content = JSON.stringify({
-    app: 'GiderTakip',
-    savedAt: new Date().toISOString(),
-    count: transactions.length,
-    transactions
-  }, null, 2);
-
-  const blob = new Blob([content], { type: 'application/json' });
-
-  try {
-    if (driveFileId) {
-      // Var olan dosyayı güncelle
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'Bearer ' + driveAccessToken,
-          'Content-Type': 'application/json',
-        },
-        body: blob,
-      });
-      showToast(`✓ ${transactions.length} işlem Drive'a kaydedildi`);
-    } else {
-      // Yeni dosya oluştur — appDataFolder yerine Drive kökü
-      const meta = { name: FILE_NAME, mimeType: 'application/json' };
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
-      form.append('file', blob);
-
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + driveAccessToken },
-        body: form,
-      });
-      const file = await res.json();
-      driveFileId = file.id;
-      localStorage.setItem('drive_file_id', driveFileId);
-      showToast(`✓ Drive'da yeni dosya oluşturuldu`);
-    }
-  } catch(err) {
-    showToast('⚠️ Kayıt başarısız: ' + err.message);
-  }
-}
-
-async function loadFromDrive() {
-  if (!driveAccessToken) { showToast('⚠️ Önce Drive\'a bağlanın'); return; }
-
-  // Dosya ID yoksa Drive'da ara
-  if (!driveFileId) {
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`,
-        { headers: { 'Authorization': 'Bearer ' + driveAccessToken } }
-      );
-      const data = await res.json();
-      if (!data.files || !data.files.length) {
-        showToast('⚠️ Drive\'da kayıtlı dosya bulunamadı');
-        return;
-      }
-      driveFileId = data.files[0].id;
-      localStorage.setItem('drive_file_id', driveFileId);
-    } catch(err) {
-      showToast('⚠️ Dosya aranırken hata: ' + err.message);
-      return;
-    }
-  }
-
-  showToast('📂 Drive\'dan yükleniyor...');
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
-      { headers: { 'Authorization': 'Bearer ' + driveAccessToken } }
-    );
-    const data = await res.json();
-    const imported = Array.isArray(data) ? data : (data.transactions || []);
-    if (!imported.length) { showToast('⚠️ Dosyada işlem bulunamadı'); return; }
-
-    if (!confirm(`Drive'da ${imported.length} işlem bulundu. Mevcut verilerle birleştirilsin mi?`)) return;
-
-    const existingIds = new Set(transactions.map(t => t.id));
-    const newTxs = imported.filter(t => !existingIds.has(t.id));
-    transactions = [...transactions, ...newTxs];
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-    save();
-    updateStats();
-    updateChart();
-    renderList();
-    showToast(`✓ ${newTxs.length} yeni işlem yüklendi`);
-  } catch(err) {
-    showToast('⚠️ Yükleme başarısız: ' + err.message);
-  }
-}
-
-// ===== LOCAL EXPORT / IMPORT =====
-function exportJSON() {
-  if (!transactions.length) { showToast('⚠️ Dışa aktarılacak işlem yok'); return; }
-  const data = {
-    app: 'GiderTakip',
-    exportDate: new Date().toISOString(),
-    count: transactions.length,
-    transactions: transactions
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const date = new Date().toISOString().slice(0,10);
-  a.href     = url;
-  a.download = `gider-takip-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`✓ ${transactions.length} işlem dışa aktarıldı`);
-}
-
-function importJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const imported = Array.isArray(data) ? data : (data.transactions || []);
-      if (!imported.length) { showToast('⚠️ Dosyada işlem bulunamadı'); return; }
-      if (!confirm(`${imported.length} işlem içe aktarılsın mı? Mevcut verilerle birleştirilecek.`)) return;
-      const existingIds = new Set(transactions.map(t => t.id));
-      const newTxs = imported.filter(t => !existingIds.has(t.id));
-      transactions = [...transactions, ...newTxs];
-      transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-      save();
-      updateStats();
-      updateChart();
-      renderList();
-      showToast(`✓ ${newTxs.length} yeni işlem eklendi`);
-    } catch(err) {
-      showToast('⚠️ Geçersiz dosya formatı');
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderList();
+  save(); updateStats(); updateChart(); renderList(); showToast('Tüm işlemler silindi');
 }
 
 // ===== STATS =====
 function updateStats() {
-  const now = new Date();
-  const thisMonth = now.toISOString().slice(0,7);
+  const ym       = new Date().toISOString().slice(0,7);
+  const cutoff   = document.getElementById('balanceDate').value; // boşsa tüm zamanlar
 
-  const income  = transactions.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
-  const expense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
-  const balance = income - expense;
+  const balTx    = cutoff ? transactions.filter(t=>t.date<=cutoff) : transactions;
+  const inc      = balTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp      = balTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance  = inc - exp;
 
-  const mIncome  = transactions.filter(t => t.type === 'income'  && t.date.startsWith(thisMonth)).reduce((s,t)=>s+t.amount,0);
-  const mExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonth)).reduce((s,t)=>s+t.amount,0);
+  const mInc = transactions.filter(t=>t.type==='income'&&t.date.startsWith(ym)).reduce((s,t)=>s+t.amount,0);
+  const mExp = transactions.filter(t=>t.type==='expense'&&t.date.startsWith(ym)).reduce((s,t)=>s+t.amount,0);
 
   document.getElementById('totalBalance').textContent = fmt(balance);
-  document.getElementById('totalIncome').textContent  = fmt(income);
-  document.getElementById('totalExpense').textContent = fmt(expense);
-  document.getElementById('incomeSub').textContent    = 'Bu ay: ' + fmt(mIncome);
-  document.getElementById('expenseSub').textContent   = 'Bu ay: ' + fmt(mExpense);
-}
+  document.getElementById('totalBalance').style.color = balance >= 0 ? '#e6a800' : '#ff4444';
 
-// ===== CHART =====
-function updateChart() {
-  const container = document.getElementById('chartBars');
-  const expenses = transactions.filter(t => t.type === 'expense');
-
-  if (!expenses.length) {
-    container.innerHTML = '<div class="empty-state" style="flex:1;padding:20px 0;"><p>Henüz gider yok</p></div>';
-    return;
+  if (cutoff) {
+    const d = new Date(cutoff+'T00:00:00');
+    const label = d.toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'});
+    document.getElementById('balanceSub').textContent = label + ' itibarıyla';
+  } else {
+    document.getElementById('balanceSub').textContent = 'Tüm zamanlar';
   }
 
-  // Group by category
-  const catTotals = {};
-  expenses.forEach(t => {
-    catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
-  });
+  document.getElementById('totalIncome').textContent  = fmt(transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+  document.getElementById('totalExpense').textContent = fmt(transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+  document.getElementById('incomeSub').textContent    = 'Bu ay: '+fmt(mInc);
+  document.getElementById('expenseSub').textContent   = 'Bu ay: '+fmt(mExp);
+}
 
-  const entries = Object.entries(catTotals).sort((a,b) => b[1]-a[1]);
-  const max = Math.max(...entries.map(e => e[1]));
-
-  const CAT_COLORS = {
-    food: '#f5922e', transport: '#2e7cf6', health: '#e84545',
-    entertainment: '#9b4fff', shopping: '#e84099', bills: '#e84545',
-    salary: '#18a96a', other: '#a0a8bb'
-  };
-
-  container.innerHTML = entries.map(([cat, total]) => {
-    const pct = Math.max(4, Math.round((total / max) * 100));
-    const color = CAT_COLORS[cat] || '#6b7280';
-    const label = CATEGORIES[cat]?.label || cat;
-    return `
-      <div class="chart-bar-wrap" title="${label}: ${fmt(total)}">
-        <div class="chart-bar" style="height:${pct}%;background:${color};opacity:0.85;"></div>
-        <div class="chart-label">${CATEGORIES[cat]?.icon || '📦'}</div>
-      </div>
-    `;
+// ===== CHARTS =====
+function switchChart(type, btn) {
+  activeChart = type;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.getElementById('chartCategory').style.display = type==='category'?'':'none';
+  document.getElementById('chartMonthly').style.display  = type==='monthly' ?'':'none';
+  document.getElementById('chartDonut').style.display    = type==='donut'   ?'':'none';
+  updateChart();
+}
+function updateChart() {
+  if (activeChart==='category') renderCatChart();
+  else if (activeChart==='monthly') renderMonthlyChart();
+  else renderDonutChart();
+}
+function renderCatChart() {
+  const c = document.getElementById('categoryBars');
+  const exp = transactions.filter(t=>t.type==='expense');
+  if (!exp.length) { c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div>'; return; }
+  const totals = {};
+  exp.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
+  const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(...entries.map(e=>e[1]));
+  c.innerHTML = entries.map(([cat,val])=>{
+    const h = Math.max(4,Math.round((val/max)*100));
+    return `<div class="chart-bar-wrap" title="${CATS[cat]?.label}: ${fmt(val)}">
+      <div class="chart-val">${fmt(val)}</div>
+      <div class="chart-bar" style="height:${h}%;background:${CATS[cat]?.color||'#9a9aaa'}"></div>
+      <div class="chart-label">${CATS[cat]?.icon||'📦'}</div>
+    </div>`;
   }).join('');
+}
+function renderMonthlyChart() {
+  const c = document.getElementById('monthlyBars');
+  if (!transactions.length) { c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz işlem yok</p></div>'; return; }
+  const now = new Date();
+  const months = Array.from({length:6},(_,i)=>{ const d=new Date(now.getFullYear(),now.getMonth()-5+i,1); return d.toISOString().slice(0,7); });
+  const data = months.map(m=>({
+    label: new Date(m+'-01').toLocaleDateString('tr-TR',{month:'short'}),
+    inc: transactions.filter(t=>t.type==='income'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0),
+    exp: transactions.filter(t=>t.type==='expense'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0),
+  }));
+  const max = Math.max(...data.flatMap(d=>[d.inc,d.exp]),1);
+  c.innerHTML = data.map(d=>{
+    const ih=Math.max(2,Math.round((d.inc/max)*100)), eh=Math.max(2,Math.round((d.exp/max)*100));
+    return `<div class="monthly-col">
+      <div class="monthly-bars"><div class="monthly-bar inc" style="height:${ih}%" title="Gelir: ${fmt(d.inc)}"></div><div class="monthly-bar exp" style="height:${eh}%" title="Gider: ${fmt(d.exp)}"></div></div>
+      <div class="monthly-month">${d.label}</div>
+    </div>`;
+  }).join('');
+}
+function renderDonutChart() {
+  const c = document.getElementById('donutWrap');
+  const exp = transactions.filter(t=>t.type==='expense');
+  if (!exp.length) { c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div>'; return; }
+  const totals={};
+  exp.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
+  const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const total=entries.reduce((s,e)=>s+e[1],0);
+  const R=45,cx=60,cy=60,circ=2*Math.PI*R; let off=0;
+  const segs=entries.map(([cat,val])=>{ const d=(val/total)*circ; const s={cat,val,d,off}; off+=d; return s; });
+  const svgParts=segs.map(s=>`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${CATS[s.cat]?.color||'#9a9aaa'}" stroke-width="20" stroke-dasharray="${s.d} ${circ-s.d}" stroke-dashoffset="${-s.off}" transform="rotate(-90 ${cx} ${cy})"/>`).join('');
+  const svg=`<svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#f0f0f5" stroke-width="20"/>${svgParts}</svg>`;
+  const legend=`<div class="donut-legend">${entries.map(([cat,val])=>`<div class="legend-item"><div class="legend-dot" style="background:${CATS[cat]?.color||'#9a9aaa'}"></div><span class="legend-label">${CATS[cat]?.icon||'📦'} ${CATS[cat]?.label||cat}</span><span class="legend-pct">${Math.round((val/total)*100)}%</span><span class="legend-amt">${fmt(val)}</span></div>`).join('')}</div>`;
+  c.innerHTML=`<div class="donut-wrap">${svg}${legend}</div>`;
 }
 
 // ===== RENDER LIST =====
 function renderList() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const now = new Date().toISOString().slice(0,7);
-
-  let filtered = transactions.filter(t => {
-    if (currentFilter === 'expense' && t.type !== 'expense') return false;
-    if (currentFilter === 'income'  && t.type !== 'income')  return false;
-    if (currentFilter === 'month'   && !t.date.startsWith(now)) return false;
-    if (search && !t.desc.toLowerCase().includes(search) && !CATEGORIES[t.category]?.label.toLowerCase().includes(search)) return false;
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const ym=new Date().toISOString().slice(0,7);
+  let items=transactions.filter(t=>{
+    if (currentFilter==='expense'&&t.type!=='expense') return false;
+    if (currentFilter==='income' &&t.type!=='income')  return false;
+    if (currentFilter==='month'  &&!t.date.startsWith(ym)) return false;
+    if (q&&!t.desc.toLowerCase().includes(q)&&!CATS[t.category]?.label.toLowerCase().includes(q)) return false;
     return true;
   });
-
-  const listEl = document.getElementById('transactionList');
-  document.getElementById('listTitle').textContent = `İşlemler (${filtered.length})`;
-
-  if (!filtered.length) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">💸</div>
-        <p>Gösterilecek işlem yok</p>
-      </div>`;
-    return;
-  }
-
-  // Group by month
-  const groups = {};
-  filtered.forEach(t => {
-    const m = t.date.slice(0,7);
-    if (!groups[m]) groups[m] = [];
-    groups[m].push(t);
-  });
-
-  const months = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-
-  listEl.innerHTML = months.map(month => {
-    const txs = groups[month];
-    const monthInc = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-    const monthExp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-    const [y,m] = month.split('-');
-    const monthName = new Date(y, m-1).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
-
-    const items = txs.map(t => {
-      const cat = CATEGORIES[t.category] || CATEGORIES.other;
-      const sign = t.type === 'income' ? '+' : '-';
-      const d = new Date(t.date + 'T00:00:00');
-      const dateStr = d.toLocaleDateString('tr-TR', {day:'2-digit', month:'short'});
-      return `
-        <div class="transaction-item ${t.type}">
+  const el=document.getElementById('transactionList');
+  document.getElementById('listTitle').textContent=`İşlemler (${items.length})`;
+  if (!items.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">💸</div><p>Gösterilecek işlem yok</p></div>'; return; }
+  const groups={};
+  items.forEach(t=>{ const m=t.date.slice(0,7); if(!groups[m]) groups[m]=[]; groups[m].push(t); });
+  el.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(month=>{
+    const txs=groups[month];
+    const mI=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const mE=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const [y,m]=month.split('-');
+    const mName=new Date(y,m-1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+    return `<div class="month-group">
+      <div class="month-label"><span>${mName}</span><span>${mE>0?'−'+fmt(mE):''} ${mI>0?'+'+fmt(mI):''}</span></div>
+      ${txs.map(t=>{
+        const cat=CATS[t.category]||CATS.other;
+        const sign=t.type==='income'?'+':'-';
+        const ds=new Date(t.date+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'short'});
+        const rb=t.recurring?'<span class="tx-rec-badge">🔄 Tekrar</span>':'';
+        return `<div class="transaction-item ${t.type}${t.recurring?' recurring-tx':''}">
           <div class="tx-icon ${cat.cls}">${cat.icon}</div>
           <div class="tx-info">
             <div class="tx-desc">${escHtml(t.desc)}</div>
-            <div class="tx-meta">
-              <span class="tx-date-label">${dateStr}</span>
-              <span class="tx-cat-badge ${cat.cls}">${cat.label}</span>
-            </div>
+            <div class="tx-meta"><span class="tx-date-label">${ds}</span><span class="tx-cat-badge ${cat.cls}">${cat.label}</span>${rb}</div>
           </div>
           <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
-          <button class="tx-delete" onclick="deleteTransaction(${t.id})" title="Sil">✕</button>
+          <button class="tx-delete" onclick="deleteTransaction('${t.id}')">×</button>
         </div>`;
-    }).join('');
-
-    return `
-      <div class="month-group">
-        <div class="month-label">
-          <span>${monthName}</span>
-          <span>${monthExp > 0 ? '−'+fmt(monthExp) : ''} ${monthInc > 0 ? '+'+fmt(monthInc) : ''}</span>
-        </div>
-        ${items}
-      </div>`;
+      }).join('')}
+    </div>`;
   }).join('');
 }
 
-// ===== HELPERS =====
-function fmt(n) {
-  return '₺' + Math.abs(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// ===== EXPORT =====
+function toggleExportMenu(e){e.stopPropagation();document.getElementById('exportMenu').classList.toggle('open');}
+function closeExportMenu(){document.getElementById('exportMenu').classList.remove('open');}
+document.addEventListener('click',closeExportMenu);
+function exportJSON(){
+  if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
+  dlFile(JSON.stringify({app:'GiderTakip',exportDate:new Date().toISOString(),count:transactions.length,transactions},null,2),`gider-takip-${td()}.json`,'application/json');
+  showToast(`✓ ${transactions.length} işlem JSON olarak aktarıldı`);
+}
+function exportCSV(){
+  if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
+  const rows=transactions.map(t=>[t.date,`"${t.desc.replace(/"/g,'""')}"`,t.type==='income'?'Gelir':'Gider',CATS[t.category]?.label||t.category,t.type==='income'?t.amount:-t.amount]);
+  dlFile('\uFEFF'+[['Tarih','Açıklama','Tür','Kategori','Tutar'],...rows].map(r=>r.join(',')).join('\n'),`gider-takip-${td()}.csv`,'text/csv;charset=utf-8');
+  showToast(`✓ ${transactions.length} işlem CSV olarak aktarıldı`);
+}
+function exportExcel(){
+  if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
+  const rows=transactions.map(t=>`<tr><td>${t.date}</td><td>${escHtml(t.desc)}</td><td>${t.type==='income'?'Gelir':'Gider'}</td><td>${CATS[t.category]?.label||t.category}</td><td>${t.type==='income'?t.amount:-t.amount}</td></tr>`).join('');
+  dlFile(`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table><thead><tr><th>Tarih</th><th>Açıklama</th><th>Tür</th><th>Kategori</th><th>Tutar (₺)</th></tr></thead><tbody>${rows}</tbody></table></body></html>`,`gider-takip-${td()}.xls`,'application/vnd.ms-excel');
+  showToast(`✓ ${transactions.length} işlem Excel olarak aktarıldı`);
+}
+function importJSON(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      const imp=Array.isArray(d)?d:(d.transactions||[]);
+      if(!imp.length){showToast('⚠️ Dosyada işlem bulunamadı');return;}
+      if(!confirm(`${imp.length} işlem içe aktarılsın mı?`)) return;
+      const ids=new Set(transactions.map(t=>String(t.id)));
+      const neu=imp.filter(t=>!ids.has(String(t.id)));
+      transactions=[...transactions,...neu].sort((a,b)=>new Date(b.date)-new Date(a.date));
+      save(); updateStats(); updateChart(); renderList();
+      showToast(`✓ ${neu.length} yeni işlem eklendi`);
+    } catch{showToast('⚠️ Geçersiz dosya formatı');}
+  };
+  r.readAsText(file); e.target.value='';
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ===== GOOGLE DRIVE =====
+const CLIENT_ID='860410014740-gph7r4l4g81nn550vsid0d6lebj2l2cj.apps.googleusercontent.com';
+const SCOPES='https://www.googleapis.com/auth/drive.file';
+const FILE_NAME='gider-takip-veriler.json';
+let driveToken=null,driveFileId=localStorage.getItem('drive_file_id')||null,tokenClient=null;
+window.addEventListener('load',()=>{
+  const gi=setInterval(()=>{if(window.gapi){clearInterval(gi);gapi.load('client',()=>gapi.client.init({}));}},200);
+  const gsi=setInterval(()=>{if(window.google&&google.accounts){clearInterval(gsi);tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPES,callback:onToken});}},200);
+});
+function driveSignIn(){if(!tokenClient){showToast('⚠️ API yükleniyor...');return;}tokenClient.requestAccessToken({prompt:'consent'});}
+function onToken(r){
+  if(r.error){showToast('⚠️ Giriş başarısız');return;}
+  driveToken=r.access_token;
+  const b=document.getElementById('driveAuthBtn');
+  b.textContent='✅ Drive Bağlı'; b.classList.add('connected');
+  document.getElementById('driveSaveBtn').style.display='';
+  document.getElementById('driveLoadBtn').style.display='';
+  showToast('✓ Google Drive bağlandı');
 }
-
-function save() {
-  localStorage.setItem('gider_txns', JSON.stringify(transactions));
+async function saveToDrive(){
+  if(!driveToken){showToast('⚠️ Önce Drive\'a bağlanın');return;}
+  if(!transactions.length){showToast('⚠️ Kaydedilecek işlem yok');return;}
+  showToast('☁️ Kaydediliyor...');
+  const blob=new Blob([JSON.stringify({app:'GiderTakip',savedAt:new Date().toISOString(),transactions,recurrings},null,2)],{type:'application/json'});
+  try{
+    if(driveFileId){
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{method:'PATCH',headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},body:blob});
+    } else {
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify({name:FILE_NAME,mimeType:'application/json'})],{type:'application/json'}));
+      form.append('file',blob);
+      const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+driveToken},body:form});
+      driveFileId=(await res.json()).id; localStorage.setItem('drive_file_id',driveFileId);
+    }
+    showToast(`✓ ${transactions.length} işlem Drive'a kaydedildi`);
+  } catch{showToast('⚠️ Kayıt başarısız');}
 }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-// Enter key
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && (e.target.id === 'desc' || e.target.id === 'amount')) {
-    addTransaction();
+async function loadFromDrive(){
+  if(!driveToken){showToast('⚠️ Önce Drive\'a bağlanın');return;}
+  if(!driveFileId){
+    try{
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'&fields=files(id)`,{headers:{'Authorization':'Bearer '+driveToken}});
+      const d=await r.json();
+      if(!d.files?.length){showToast('⚠️ Drive\'da dosya bulunamadı');return;}
+      driveFileId=d.files[0].id; localStorage.setItem('drive_file_id',driveFileId);
+    } catch{showToast('⚠️ Arama başarısız');return;}
   }
+  showToast('📂 Yükleniyor...');
+  try{
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{'Authorization':'Bearer '+driveToken}});
+    const d=await r.json();
+    const imp=Array.isArray(d)?d:(d.transactions||[]);
+    if(!imp.length){showToast('⚠️ Dosyada işlem bulunamadı');return;}
+    if(!confirm(`Drive'da ${imp.length} işlem bulundu. Birleştirilsin mi?`)) return;
+    const ids=new Set(transactions.map(t=>String(t.id)));
+    const neu=imp.filter(t=>!ids.has(String(t.id)));
+    transactions=[...transactions,...neu].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(d.recurrings){recurrings=d.recurrings;localStorage.setItem('gider_rec',JSON.stringify(recurrings));}
+    save(); updateStats(); updateChart(); renderRecurring(); renderList();
+    showToast(`✓ ${neu.length} yeni işlem yüklendi`);
+  } catch{showToast('⚠️ Yükleme başarısız');}
+}
+
+// ===== HELPERS =====
+function fmt(n){return '₺'+Math.abs(n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function td(){return new Date().toISOString().slice(0,10);}
+function save(){localStorage.setItem('gider_txns',JSON.stringify(transactions));}
+function dlFile(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.target.id==='desc'||e.target.id==='amount')) addTransaction();
+  if(e.key==='Escape') closeRecurringModal();
 });
 
-// Update clock
-setInterval(() => {
-  const now = new Date();
-  document.getElementById('headerDate').innerHTML =
-    now.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
-    + '<br>' + now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
-}, 60000);
 
 init();
 </script>
