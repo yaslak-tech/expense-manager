@@ -451,8 +451,15 @@
             <button onclick="exportExcel();closeExportMenu()">📗 Excel (.xls)</button>
           </div>
         </div>
-        <button class="toolbar-btn" onclick="document.getElementById('importFile').click()">📥 İçe Aktar</button>
-        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+        <div class="export-wrap">
+          <button class="toolbar-btn" onclick="toggleImportMenu(event)">📥 İçe Aktar ▾</button>
+          <div class="export-menu" id="importMenu">
+            <button onclick="triggerImport('json')">📄 JSON</button>
+            <button onclick="triggerImport('csv')">📊 CSV</button>
+          </div>
+        </div>
+        <input type="file" id="importFileJson" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+        <input type="file" id="importFileCsv"  accept=".csv,text/csv,text/plain" style="display:none" onchange="importCSV(event)">
         <button class="clear-btn" onclick="clearAll()">Tümünü Sil</button>
       </div>
     </div>
@@ -1495,7 +1502,15 @@ function renderList() {
 // ===== EXPORT =====
 function toggleExportMenu(e){e.stopPropagation();document.getElementById('exportMenu').classList.toggle('open');}
 function closeExportMenu(){document.getElementById('exportMenu').classList.remove('open');}
-document.addEventListener('click',closeExportMenu);
+function toggleImportMenu(e){e.stopPropagation();closeExportMenu();document.getElementById('importMenu').classList.toggle('open');}
+function closeImportMenu(){document.getElementById('importMenu').classList.remove('open');}
+document.addEventListener('click',function(){closeExportMenu();closeImportMenu();});
+
+function triggerImport(type){
+  closeImportMenu();
+  if(type==='json') document.getElementById('importFileJson').click();
+  else if(type==='csv') document.getElementById('importFileCsv').click();
+}
 function exportJSON(){
   if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
   dlFile(JSON.stringify({app:'GiderTakip',exportDate:new Date().toISOString(),count:transactions.length,transactions},null,2),`gider-takip-${td()}.json`,'application/json');
@@ -1503,9 +1518,17 @@ function exportJSON(){
 }
 function exportCSV(){
   if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
-  const rows=transactions.map(t=>[t.date,`"${t.desc.replace(/"/g,'""')}"`,t.type==='income'?'Gelir':'Gider',CATS[t.category]?.label||t.category,t.type==='income'?t.amount:-t.amount]);
-  dlFile('\uFEFF'+[['Tarih','Açıklama','Tür','Kategori','Tutar'],...rows].map(r=>r.join(',')).join('\n'),`gider-takip-${td()}.csv`,'text/csv;charset=utf-8');
-  showToast(`✓ ${transactions.length} işlem CSV olarak aktarıldı`);
+  const rows=transactions.map(t=>[
+    t.date,
+    '"'+(t.desc||'').replace(/"/g,'""')+'"',
+    t.type==='income'?'Gelir':'Gider',
+    CATS[t.category]?.label||t.category,
+    t.type==='income'?t.amount:-t.amount,
+    PAYMENT_METHODS[t.payment]?.label||t.payment||'Nakit',
+    t.paymentDate||t.date
+  ]);
+  dlFile('\uFEFF'+[['Tarih','Açıklama','Tür','Kategori','Tutar','Ödeme Yöntemi','Ödeme Tarihi'],...rows].map(r=>r.join(',')).join('\n'),`gider-takip-${td()}.csv`,'text/csv;charset=utf-8');
+  showToast('✓ '+transactions.length+' işlem CSV olarak aktarıldı');
 }
 function exportExcel(){
   if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
@@ -1521,15 +1544,58 @@ function importJSON(e){
       const d=JSON.parse(ev.target.result);
       const imp=Array.isArray(d)?d:(d.transactions||[]);
       if(!imp.length){showToast('⚠️ Dosyada işlem bulunamadı');return;}
-      if(!confirm(`${imp.length} işlem içe aktarılsın mı?`)) return;
+      if(!confirm(imp.length+' işlem içe aktarılsın mı?')) return;
       const ids=new Set(transactions.map(t=>String(t.id)));
       const neu=imp.filter(t=>!ids.has(String(t.id)));
       transactions=[...transactions,...neu].sort((a,b)=>new Date(b.date)-new Date(a.date));
       save(); updateStats(); updateChart(); renderList();
-      showToast(`✓ ${neu.length} yeni işlem eklendi`);
-    } catch{showToast('⚠️ Geçersiz dosya formatı');}
+      showToast('✓ '+neu.length+' yeni işlem eklendi');
+    } catch{showToast('⚠️ Geçersiz JSON formatı');}
   };
   r.readAsText(file); e.target.value='';
+}
+
+function importCSV(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const lines=ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+      if(lines.length<2){showToast('⚠️ CSV boş veya hatalı');return;}
+      // Başlık satırını atla
+      const rows=lines.slice(1);
+      const catLabelToKey={};
+      Object.entries(CATS).forEach(([k,v])=>{ catLabelToKey[v.label]=k; });
+      const pmLabelToKey={};
+      Object.entries(PAYMENT_METHODS).forEach(([k,v])=>{ pmLabelToKey[v.label]=k; });
+
+      const imported=[];
+      rows.forEach(line=>{
+        const cols=line.split(',');
+        if(cols.length<5) return;
+        const date    = cols[0].trim();
+        const desc    = cols[1].trim().replace(/^"|"$/g,'').replace(/""/g,'"');
+        const type    = cols[2].trim()==='Gelir'?'income':'expense';
+        const catLbl  = cols[3].trim();
+        const amount  = Math.abs(parseFloat(cols[4]));
+        const pmLbl   = cols[5]?cols[5].trim():'';
+        const pdDate  = cols[6]?cols[6].trim():'';
+        if(!date||!desc||isNaN(amount)) return;
+        const category = catLabelToKey[catLbl]||'other';
+        const payment  = pmLabelToKey[pmLbl]||'nakit';
+        imported.push({ id:Date.now()+Math.random(), desc, amount, category, type, date, payment, paymentDate:pdDate||date });
+      });
+
+      if(!imported.length){showToast('⚠️ Geçerli işlem bulunamadı');return;}
+      if(!confirm(imported.length+' işlem içe aktarılsın mı?')) return;
+      const ids=new Set(transactions.map(t=>t.date+'_'+t.desc+'_'+t.amount));
+      const neu=imported.filter(t=>!ids.has(t.date+'_'+t.desc+'_'+t.amount));
+      transactions=[...transactions,...neu].sort((a,b)=>new Date(b.date)-new Date(a.date));
+      save(); updateStats(); updateChart(); renderList();
+      showToast('✓ '+neu.length+' yeni işlem eklendi');
+    } catch(err){showToast('⚠️ CSV okunamadı: '+err.message);}
+  };
+  r.readAsText(file,'UTF-8'); e.target.value='';
 }
 
 // ===== GOOGLE DRIVE — OTOMATİK KAYIT =====
