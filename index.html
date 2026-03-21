@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gider Takip</title>
+<title>Gider Takip v1.9</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
@@ -247,9 +247,8 @@
   <header>
     <div class="header-left">
       <h1>Gider<span>Takip</span></h1>
-      <p>GELİR &amp; GİDER TAKİP SİSTEMİ</p>
+      <p>GELİR &amp; GİDER TAKİP SİSTEMİ &nbsp;<span style="font-size:10px;color:#b38000;background:rgba(230,168,0,0.15);border-radius:10px;padding:2px 8px;letter-spacing:1px;">v1.9 · 2026-03-22</span></p>
     </div>
-
   </header>
 
   <!-- ADD FORM -->
@@ -448,7 +447,7 @@
           <div class="export-menu" id="exportMenu">
             <button onclick="exportJSON();closeExportMenu()">📄 JSON</button>
             <button onclick="exportCSV();closeExportMenu()">📊 CSV</button>
-            <button onclick="exportExcel();closeExportMenu()">📗 Excel (.xls)</button>
+            <button onclick="exportExcel('xlsx');closeExportMenu()">📗 Excel (.xlsx)</button>
           </div>
         </div>
         <div class="export-wrap">
@@ -456,10 +455,12 @@
           <div class="export-menu" id="importMenu">
             <button onclick="triggerImport('json')">📄 JSON</button>
             <button onclick="triggerImport('csv')">📊 CSV</button>
+            <button onclick="triggerImport('excel')">📗 Excel (.xlsx)</button>
           </div>
         </div>
-        <input type="file" id="importFileJson" accept=".json,application/json" style="display:none" onchange="importJSON(event)">
-        <input type="file" id="importFileCsv"  accept=".csv,text/csv,text/plain" style="display:none" onchange="importCSV(event)">
+        <input type="file" id="importFileJson"  accept=".json,application/json" style="display:none" onchange="importJSON(event)">
+        <input type="file" id="importFileCsv"   accept=".csv,text/csv,text/plain" style="display:none" onchange="importCSV(event)">
+        <input type="file" id="importFileExcel" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="importExcel(event)">
         <button class="clear-btn" onclick="clearAll()">Tümünü Sil</button>
       </div>
     </div>
@@ -531,16 +532,24 @@
     <div class="form-row" style="margin-bottom:12px;">
       <div class="form-group">
         <label>Başlangıç Tarihi</label>
-        <input type="date" id="rStartDate" onchange="updateRecurringPaymentNote()">
+        <input type="date" id="rStartDate" onchange="onRStartDateChange()">
       </div>
       <div class="form-group">
-        <label>Bitiş Tarihi (opsiyonel)</label>
-        <input type="date" id="rEndDate">
+        <label>Taksit / Ödeme Sayısı (opsiyonel)</label>
+        <input type="number" id="rInstallments" placeholder="örn. 12" min="1" step="1" onchange="onRInstallmentsChange()">
       </div>
     </div>
-    <div class="form-group" style="margin-bottom:0;">
-      <label>Aylık ise — Ayın kaçı?</label>
-      <input type="number" id="rDay" placeholder="1-31" min="1" max="31" value="1">
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group">
+        <label>Bitiş Tarihi (opsiyonel)</label>
+        <input type="date" id="rEndDate" onchange="onREndDateChange()">
+      </div>
+      <div class="form-group">
+        <label>Aylık ise — Ayın kaçı?</label>
+        <input type="number" id="rDay" placeholder="1-31" min="1" max="31" value="1" onchange="onRDayChange()">
+      </div>
+    </div>
+    <div id="rInstallmentPreview" style="display:none;font-size:12px;color:#27ae60;background:rgba(39,174,96,0.08);border-radius:8px;padding:8px 12px;margin-bottom:12px;">
     </div>
     <div class="modal-note">
       💡 "Toplu Oluştur" butonuyla başlangıç tarihinden bitiş tarihine kadar tüm işlemler tek seferde listeye eklenir.
@@ -643,37 +652,38 @@ const CATS = {
 const FREQ = { monthly:'Her Ay', quarterly:'3 Ayda 1', weekly:'Her Hafta', yearly:'Her Yıl' };
 
 const PAYMENT_METHODS = {
-  nakit:            { label:'Nakit',                    icon:'💵', duoDay: null,  nextMonth: false },
-  yk_crystal:       { label:'Yapı Kredi Crystal',       icon:'💳', dueDay: 'last', nextMonth: false },
-  yk_hepsiburada:   { label:'Yapı Kredi Hepsiburada',   icon:'💳', dueDay: 5,     nextMonth: true  },
-  kuveyt_saglam:    { label:'Kuveyt Sağlam Kart',       icon:'💳', dueDay: 1,     nextMonth: true  },
-  kuveyt_miles:     { label:'Kuveyt Miles&Smiles',      icon:'✈️', dueDay: 9,     nextMonth: true  },
+  nakit:            { label:'Nakit',                    icon:'💵', cutDay: null, dueDay: null    },
+  yk_crystal:       { label:'Yapı Kredi Crystal',       icon:'💳', cutDay: 22,   dueDay: 'last'  },
+  yk_hepsiburada:   { label:'Yapı Kredi Hepsiburada',   icon:'💳', cutDay: 28,   dueDay: 5       },
+  kuveyt_saglam:    { label:'Kuveyt Sağlam Kart',       icon:'💳', cutDay: 23,   dueDay: 1       },
+  kuveyt_miles:     { label:'Kuveyt Miles&Smiles',      icon:'✈️', cutDay: 30,   dueDay: 9       },
 };
 
-// Ödeme tarihini otomatik hesapla
+// Ödeme tarihini hesapla
+// Kural: alışveriş günü ≤ kesim günü → aynı ay ödeme, > kesim günü → sonraki ay ödeme
 function calcPaymentDate(txDateStr, paymentKey) {
   if (!txDateStr) return txDateStr;
   const pm = PAYMENT_METHODS[paymentKey];
-  if (!pm || paymentKey === 'nakit') return txDateStr; // Nakit → alışveriş tarihi
+  if (!pm || !pm.cutDay) return txDateStr; // Nakit → alışveriş tarihi
 
   const d = new Date(txDateStr + 'T00:00:00');
-  let year  = d.getFullYear();
-  let month = d.getMonth(); // 0-indexed
+  const txDay   = d.getDate();
+  const txMonth = d.getMonth(); // 0-indexed
+  const txYear  = d.getFullYear();
 
-  if (pm.nextMonth) month += 1;
-  if (month > 11) { month = 0; year += 1; }
-
-  let day;
-  if (pm.dueDay === 'last') {
-    // Ayın son günü
-    day = new Date(year, month + 1, 0).getDate();
-  } else {
-    // Sabit gün — o ayda bu gün yoksa ayın son günü
-    const maxDay = new Date(year, month + 1, 0).getDate();
-    day = Math.min(pm.dueDay, maxDay);
+  // Alışveriş günü kesim gününden sonra mı? → sonraki ay
+  let payYear  = txYear;
+  let payMonth = txMonth;
+  if (txDay > pm.cutDay) {
+    payMonth += 1;
+    if (payMonth > 11) { payMonth = 0; payYear += 1; }
   }
 
-  return year + '-' + String(month + 1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+  // Ödeme günü hesapla
+  const maxDay = new Date(payYear, payMonth + 1, 0).getDate();
+  const day = pm.dueDay === 'last' ? maxDay : Math.min(pm.dueDay, maxDay);
+
+  return payYear + '-' + String(payMonth + 1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
 }
 
 function autoSetPaymentDate() {
@@ -877,19 +887,30 @@ function openEditRecurringModal(id) {
   document.getElementById('rStartDate').value   = r.startDate || '';
   document.getElementById('rEndDate').value     = r.endDate   || '';
   document.getElementById('rPaymentMethod').value = r.payment || 'nakit';
+  // Taksit sayısını hesapla
+  if (r.startDate && r.endDate) {
+    const count = calcInstallmentsFromDates(r.startDate, r.endDate, r.freq, r.day||1);
+    document.getElementById('rInstallments').value = count || '';
+  } else {
+    document.getElementById('rInstallments').value = '';
+  }
   setRType(r.type);
   updateRecurringPaymentNote();
+  updateInstallmentPreview();
   document.getElementById('recurringModal').classList.add('open');
 }
 
 function closeRecurringModal() {
   editingRecurringId = null;
   document.getElementById('recurringModal').classList.remove('open');
-  ['rDesc','rAmount','rDay'].forEach(id => document.getElementById(id).value = id==='rDay'?'1':'');
+  ['rDesc','rAmount','rDay','rInstallments'].forEach(id => {
+    document.getElementById(id).value = id==='rDay'?'1':'';
+  });
   document.getElementById('rEndDate').value   = '';
   document.getElementById('rStartDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('rGenerateBtn').style.display = '';
   document.getElementById('rPaymentNote').style.display = 'none';
+  document.getElementById('rInstallmentPreview').style.display = 'none';
   setRType('expense');
 }
 function setRType(t) {
@@ -913,13 +934,110 @@ function updateRecurringPaymentNote() {
   if (startDate) {
     const exampleDate = calcPaymentDate(startDate, payment);
     const formatted   = exampleDate ? new Date(exampleDate + 'T00:00:00').toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'}) : '';
-    text = '💰 Ödeme tarihi her alışveriş için otomatik hesaplanacak. Örnek: ' + startDate + ' tarihli alışveriş → Ödeme: ' + formatted;
+    text = '💰 Hesap kesim: ayın ' + pm.cutDay + '. günü. Örnek: ' + startDate + ' → Ödeme: ' + formatted;
   } else {
-    const dueDesc = pm.dueDay === 'last' ? 'ayın son günü' : ('sonraki ayın ' + pm.dueDay + '. günü');
-    text = '💰 Her işlem için ödeme tarihi ' + dueDesc + ' olarak hesaplanacak.';
+    const dueDesc = pm.dueDay === 'last' ? 'ayın son günü' : ('ayın ' + pm.dueDay + '. günü');
+    text = '💰 Hesap kesim: ayın ' + pm.cutDay + '. günü · Ödeme: ' + dueDesc;
   }
   noteEl.textContent = text;
   noteEl.style.display = '';
+}
+
+// Taksit sayısından bitiş tarihi hesapla
+function calcEndDateFromInstallments(startDate, freq, day, count) {
+  if (!startDate || !count || count < 1) return '';
+  const d = new Date(startDate + 'T00:00:00');
+  let year = d.getFullYear(), month = d.getMonth();
+
+  if (freq === 'monthly') {
+    month += (count - 1);
+  } else if (freq === 'quarterly') {
+    month += (count - 1) * 3;
+  } else if (freq === 'weekly') {
+    const endD = new Date(d.getTime() + (count - 1) * 7 * 86400000);
+    return endD.toISOString().split('T')[0];
+  } else if (freq === 'yearly') {
+    year += (count - 1);
+  }
+
+  while (month > 11) { month -= 12; year++; }
+  const maxDay = new Date(year, month + 1, 0).getDate();
+  const useDay = Math.min(parseInt(day) || 1, maxDay);
+  return year + '-' + String(month + 1).padStart(2,'0') + '-' + String(useDay).padStart(2,'0');
+}
+
+// Bitiş tarihinden taksit sayısı hesapla
+function calcInstallmentsFromDates(startDate, endDate, freq, day) {
+  if (!startDate || !endDate) return '';
+  const dates = generateDates(
+    { freq, day: parseInt(day)||1 },
+    startDate, endDate
+  );
+  return dates.length;
+}
+
+function updateInstallmentPreview() {
+  const startDate    = document.getElementById('rStartDate').value;
+  const endDate      = document.getElementById('rEndDate').value;
+  const installments = document.getElementById('rInstallments').value;
+  const freq         = document.getElementById('rFreq').value;
+  const day          = document.getElementById('rDay').value || 1;
+  const payment      = document.getElementById('rPaymentMethod').value;
+  const previewEl    = document.getElementById('rInstallmentPreview');
+  if (!previewEl) return;
+
+  if (!startDate || (!endDate && !installments)) {
+    previewEl.style.display = 'none';
+    return;
+  }
+
+  const useEnd = endDate || calcEndDateFromInstallments(startDate, freq, day, parseInt(installments));
+  if (!useEnd) { previewEl.style.display = 'none'; return; }
+
+  // Ödeme tarihlerini hesapla
+  const dates = generateDates({ freq, day: parseInt(day)||1 }, startDate, useEnd);
+  if (!dates.length) { previewEl.style.display = 'none'; return; }
+
+  const payDates = dates.map(d => calcPaymentDate(d, payment));
+  const firstPay = new Date(payDates[0]+'T00:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+  const lastPay  = new Date(payDates[payDates.length-1]+'T00:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+
+  previewEl.innerHTML = '✅ <strong>' + dates.length + ' taksit</strong> · '
+    + 'İlk ödeme: <strong>' + firstPay + '</strong> · '
+    + 'Son ödeme: <strong>' + lastPay + '</strong>';
+  previewEl.style.display = '';
+}
+
+function onRStartDateChange() {
+  updateRecurringPaymentNote();
+  updateInstallmentPreview();
+}
+function onREndDateChange() {
+  // Bitiş tarihi girilince taksit sayısını güncelle
+  const startDate = document.getElementById('rStartDate').value;
+  const endDate   = document.getElementById('rEndDate').value;
+  const freq      = document.getElementById('rFreq').value;
+  const day       = document.getElementById('rDay').value || 1;
+  if (startDate && endDate) {
+    const count = calcInstallmentsFromDates(startDate, endDate, freq, day);
+    document.getElementById('rInstallments').value = count || '';
+  }
+  updateInstallmentPreview();
+}
+function onRInstallmentsChange() {
+  // Taksit sayısı girilince bitiş tarihini güncelle
+  const startDate    = document.getElementById('rStartDate').value;
+  const installments = parseInt(document.getElementById('rInstallments').value);
+  const freq         = document.getElementById('rFreq').value;
+  const day          = document.getElementById('rDay').value || 1;
+  if (startDate && installments > 0) {
+    const endDate = calcEndDateFromInstallments(startDate, freq, day, installments);
+    document.getElementById('rEndDate').value = endDate || '';
+  }
+  updateInstallmentPreview();
+}
+function onRDayChange() {
+  onREndDateChange(); // Gün değişince taksit sayısını yeniden hesapla
 }
 
 function getRecurringFormData() {
@@ -1508,12 +1626,73 @@ document.addEventListener('click',function(){closeExportMenu();closeImportMenu()
 
 function triggerImport(type){
   closeImportMenu();
-  if(type==='json') document.getElementById('importFileJson').click();
-  else if(type==='csv') document.getElementById('importFileCsv').click();
+  if(type==='json')  document.getElementById('importFileJson').click();
+  else if(type==='csv')   document.getElementById('importFileCsv').click();
+  else if(type==='excel') document.getElementById('importFileExcel').click();
+}
+
+function importExcel(e){
+  const file=e.target.files[0]; if(!file) return;
+  // SheetJS'i dinamik olarak yükle
+  if(!window.XLSX){
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload=()=>_parseExcel(file);
+    script.onerror=()=>showToast('⚠️ SheetJS yüklenemedi, internet bağlantısını kontrol et');
+    document.head.appendChild(script);
+  } else {
+    _parseExcel(file);
+  }
+  e.target.value='';
+}
+
+function _parseExcel(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){showToast('⚠️ Excel boş veya hatalı');return;}
+
+      const catLabelToKey={};
+      Object.entries(CATS).forEach(([k,v])=>{ catLabelToKey[v.label]=k; });
+      const pmLabelToKey={};
+      Object.entries(PAYMENT_METHODS).forEach(([k,v])=>{ pmLabelToKey[v.label]=k; });
+
+      // İlk satır başlık — atla
+      const imported=[];
+      rows.slice(1).forEach(cols=>{
+        if(!cols||cols.length<5) return;
+        const date    = String(cols[0]||'').trim();
+        const desc    = String(cols[1]||'').trim();
+        const typeStr = String(cols[2]||'').trim();
+        const catLbl  = String(cols[3]||'').trim();
+        const amount  = Math.abs(parseFloat(cols[4]));
+        const pmLbl   = String(cols[5]||'').trim();
+        const pdDate  = String(cols[6]||'').trim();
+        if(!date||!desc||isNaN(amount)) return;
+        const type     = typeStr==='Gelir'?'income':'expense';
+        const category = catLabelToKey[catLbl]||'other';
+        const payment  = pmLabelToKey[pmLbl]||'nakit';
+        imported.push({ id:Date.now()+Math.random(), desc, amount, category, type, date, payment, paymentDate:pdDate||date });
+      });
+
+      if(!imported.length){showToast('⚠️ Geçerli işlem bulunamadı');return;}
+      if(!confirm(imported.length+' işlem içe aktarılsın mı?')) return;
+      const ids=new Set(transactions.map(t=>t.date+'_'+t.desc+'_'+t.amount));
+      const neu=imported.filter(t=>!ids.has(t.date+'_'+t.desc+'_'+t.amount));
+      transactions=[...transactions,...neu].sort((a,b)=>new Date(b.date)-new Date(a.date));
+      save(); updateStats(); updateChart(); renderList();
+      showToast('✓ '+neu.length+' yeni işlem eklendi');
+    } catch(err){showToast('⚠️ Excel okunamadı: '+err.message);}
+  };
+  r.readAsArrayBuffer(file);
 }
 function exportJSON(){
   if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
-  dlFile(JSON.stringify({app:'GiderTakip',exportDate:new Date().toISOString(),count:transactions.length,transactions},null,2),`gider-takip-${td()}.json`,'application/json');
+  dlFile(JSON.stringify({app:'GiderTakip',version:APP_VERSION,exportDate:new Date().toISOString(),count:transactions.length,transactions},null,2),filePrefix()+'.json','application/json');
   showToast(`✓ ${transactions.length} işlem JSON olarak aktarıldı`);
 }
 function exportCSV(){
@@ -1527,15 +1706,217 @@ function exportCSV(){
     PAYMENT_METHODS[t.payment]?.label||t.payment||'Nakit',
     t.paymentDate||t.date
   ]);
-  dlFile('\uFEFF'+[['Tarih','Açıklama','Tür','Kategori','Tutar','Ödeme Yöntemi','Ödeme Tarihi'],...rows].map(r=>r.join(',')).join('\n'),`gider-takip-${td()}.csv`,'text/csv;charset=utf-8');
+  dlFile('\uFEFF'+[['Tarih','Açıklama','Tür','Kategori','Tutar','Ödeme Yöntemi','Ödeme Tarihi'],...rows].map(r=>r.join(',')).join('\n'),filePrefix()+'.csv','text/csv;charset=utf-8');
   showToast('✓ '+transactions.length+' işlem CSV olarak aktarıldı');
 }
-function exportExcel(){
+function exportExcel(format){
   if(!transactions.length){showToast('⚠️ Dışa aktarılacak işlem yok');return;}
-  const rows=transactions.map(t=>`<tr><td>${t.date}</td><td>${escHtml(t.desc)}</td><td>${t.type==='income'?'Gelir':'Gider'}</td><td>${CATS[t.category]?.label||t.category}</td><td>${t.type==='income'?t.amount:-t.amount}</td></tr>`).join('');
-  dlFile(`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table><thead><tr><th>Tarih</th><th>Açıklama</th><th>Tür</th><th>Kategori</th><th>Tutar (₺)</th></tr></thead><tbody>${rows}</tbody></table></body></html>`,`gider-takip-${td()}.xls`,'application/vnd.ms-excel');
-  showToast(`✓ ${transactions.length} işlem Excel olarak aktarıldı`);
+  _exportXlsxPure();
 }
+
+function _exportXlsxPure(){
+  // Saf JS ile gerçek .xlsx — CDN gerektirmez
+  const headers=['Tarih','Açıklama','Tür','Kategori','Tutar (₺)','Ödeme Yöntemi','Ödeme Tarihi'];
+  const rows=transactions.map(t=>[
+    t.date,
+    t.desc,
+    t.type==='income'?'Gelir':'Gider',
+    CATS[t.category]?.label||t.category,
+    t.type==='income'?t.amount:-t.amount,
+    PAYMENT_METHODS[t.payment]?.label||t.payment||'Nakit',
+    t.paymentDate||t.date
+  ]);
+  const allRows=[headers,...rows];
+
+  // Shared strings
+  const strings=[];
+  const strMap={};
+  function si(s){
+    const k=String(s);
+    if(strMap[k]===undefined){strMap[k]=strings.length;strings.push(k);}
+    return strMap[k];
+  }
+
+  // worksheet rows XML
+  let wsRows='';
+  allRows.forEach((row,ri)=>{
+    wsRows+='<row r="'+(ri+1)+'">';
+    row.forEach((cell,ci)=>{
+      const col=String.fromCharCode(65+ci);
+      const ref=col+(ri+1);
+      const v=String(cell);
+      const isNum=ri>0&&(ci===4); // Tutar sütunu sayı
+      if(isNum){
+        wsRows+='<c r="'+ref+'"><v>'+v+'</v></c>';
+      } else {
+        wsRows+='<c r="'+ref+'" t="s"><v>'+si(v)+'</v></c>';
+      }
+    });
+    wsRows+='</row>';
+  });
+
+  const colWidths='<cols>'
+    +'<col min="1" max="1" width="12" customWidth="1"/>'
+    +'<col min="2" max="2" width="30" customWidth="1"/>'
+    +'<col min="3" max="3" width="8" customWidth="1"/>'
+    +'<col min="4" max="4" width="14" customWidth="1"/>'
+    +'<col min="5" max="5" width="12" customWidth="1"/>'
+    +'<col min="6" max="6" width="24" customWidth="1"/>'
+    +'<col min="7" max="7" width="12" customWidth="1"/>'
+    +'</cols>';
+
+  const wsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    +colWidths
+    +'<sheetData>'+wsRows+'</sheetData>'
+    +'</worksheet>';
+
+  const ssXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="'+strings.length+'" uniqueCount="'+strings.length+'">'
+    +strings.map(s=>'<si><t xml:space="preserve">'+s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')+'</t></si>').join('')
+    +'</sst>';
+
+  const wbXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+    +'<sheets><sheet name="GiderTakip" sheetId="1" r:id="rId1"/></sheets>'
+    +'</workbook>';
+
+  const relsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+    +'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'
+    +'</Relationships>';
+
+  const wbRelsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+    +'</Relationships>';
+
+  const contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    +'<Default Extension="xml" ContentType="application/xml"/>'
+    +'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    +'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+    +'<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>'
+    +'</Types>';
+
+  // ZIP oluştur (mini zip builder)
+  function toUTF8(str){
+    return new TextEncoder().encode(str);
+  }
+  function buildZip(files){
+    // files: [{name, data: Uint8Array}]
+    const crc32Table=(()=>{
+      const t=new Uint32Array(256);
+      for(let i=0;i<256;i++){
+        let c=i;
+        for(let j=0;j<8;j++) c=c&1?(0xEDB88320^(c>>>1)):(c>>>1);
+        t[i]=c;
+      }
+      return t;
+    })();
+    function crc32(buf){
+      let c=0xFFFFFFFF;
+      for(let i=0;i<buf.length;i++) c=crc32Table[(c^buf[i])&0xFF]^(c>>>8);
+      return (c^0xFFFFFFFF)>>>0;
+    }
+    function u16(n){return [n&0xFF,(n>>8)&0xFF];}
+    function u32(n){return [n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];}
+    function concat(...args){
+      const total=args.reduce((s,a)=>s+a.length,0);
+      const out=new Uint8Array(total);
+      let off=0;
+      args.forEach(a=>{out.set(a,off);off+=a.length;});
+      return out;
+    }
+
+    const localHeaders=[];
+    const centralHeaders=[];
+    let offset=0;
+
+    files.forEach(f=>{
+      const nameBytes=new TextEncoder().encode(f.name);
+      const crc=crc32(f.data);
+      const local=concat(
+        new Uint8Array([0x50,0x4B,0x03,0x04]), // sig
+        new Uint8Array([20,0]),                  // version
+        new Uint8Array([0,0]),                   // flags
+        new Uint8Array([0,0]),                   // compression (store)
+        new Uint8Array([0,0,0,0]),               // mod time/date
+        new Uint8Array(u32(crc)),
+        new Uint8Array(u32(f.data.length)),
+        new Uint8Array(u32(f.data.length)),
+        new Uint8Array(u16(nameBytes.length)),
+        new Uint8Array([0,0]),                   // extra len
+        nameBytes,
+        f.data
+      );
+      const central=concat(
+        new Uint8Array([0x50,0x4B,0x01,0x02]),
+        new Uint8Array([20,0,20,0]),
+        new Uint8Array([0,0,0,0]),
+        new Uint8Array(u32(crc)),
+        new Uint8Array(u32(f.data.length)),
+        new Uint8Array(u32(f.data.length)),
+        new Uint8Array(u16(nameBytes.length)),
+        new Uint8Array([0,0,0,0,0,0,0,0,0,0,0,0]),
+        new Uint8Array(u32(offset)),
+        nameBytes
+      );
+      localHeaders.push(local);
+      centralHeaders.push(central);
+      offset+=local.length;
+    });
+
+    const centralStart=offset;
+    const centralSize=centralHeaders.reduce((s,c)=>s+c.length,0);
+    const eocd=concat(
+      new Uint8Array([0x50,0x4B,0x05,0x06]),
+      new Uint8Array([0,0,0,0]),
+      new Uint8Array(u16(files.length)),
+      new Uint8Array(u16(files.length)),
+      new Uint8Array(u32(centralSize)),
+      new Uint8Array(u32(centralStart)),
+      new Uint8Array([0,0])
+    );
+
+    const parts=[...localHeaders,...centralHeaders,eocd];
+    const total=parts.reduce((s,p)=>s+p.length,0);
+    const out=new Uint8Array(total);
+    let off2=0;
+    parts.forEach(p=>{out.set(p,off2);off2+=p.length;});
+    return out;
+  }
+
+  const zip=buildZip([
+    {name:'[Content_Types].xml',       data:toUTF8(contentTypes)},
+    {name:'_rels/.rels',               data:toUTF8(wbRelsXml)},
+    {name:'xl/workbook.xml',           data:toUTF8(wbXml)},
+    {name:'xl/_rels/workbook.xml.rels',data:toUTF8(relsXml)},
+    {name:'xl/worksheets/sheet1.xml',  data:toUTF8(wsXml)},
+    {name:'xl/sharedStrings.xml',      data:toUTF8(ssXml)},
+  ]);
+
+  const blob=new Blob([zip],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const filename=filePrefix()+'.xlsx';
+
+  // Android için base64 data URL yöntemi
+  const reader=new FileReader();
+  reader.onload=function(){
+    const a=document.createElement('a');
+    a.href=reader.result;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+  reader.readAsDataURL(blob);
+  showToast('✓ '+transactions.length+' işlem .xlsx olarak aktarıldı');
+}
+
+function _exportXlsx(){ _exportXlsxPure(); } // eski referans için
 function importJSON(e){
   const file=e.target.files[0]; if(!file) return;
   const r=new FileReader();
@@ -1736,11 +2117,25 @@ async function autoLoadFromDrive(){
 function fmt(n){return '₺'+Math.abs(n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function td(){return new Date().toISOString().slice(0,10);}
+const APP_VERSION='1.9';
+function filePrefix(){ return 'gider-takip-v'+APP_VERSION+'-'+td(); }
 function save(){
   localStorage.setItem('gider_txns',JSON.stringify(transactions));
   autoSaveToDrive(); // Drive bağlıysa otomatik kaydet
 }
-function dlFile(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+function dlFile(content,name,type){
+  const blob=new Blob([content],{type});
+  const reader=new FileReader();
+  reader.onload=function(){
+    const a=document.createElement('a');
+    a.href=reader.result;
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  reader.readAsDataURL(blob);
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 document.addEventListener('keydown',e=>{
