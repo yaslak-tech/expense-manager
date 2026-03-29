@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gider Takip v2.6</title>
+<title>Gider Takip v3.0</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
@@ -247,7 +247,7 @@
   <header>
     <div class="header-left">
       <h1>Gider<span>Takip</span></h1>
-      <p>GELİR &amp; GİDER TAKİP SİSTEMİ &nbsp;<span style="font-size:10px;color:#b38000;background:rgba(230,168,0,0.15);border-radius:10px;padding:2px 8px;letter-spacing:1px;">v2.6 · 2026-03-22</span></p>
+      <p>GELİR &amp; GİDER TAKİP SİSTEMİ &nbsp;<span style="font-size:10px;color:#b38000;background:rgba(230,168,0,0.15);border-radius:10px;padding:2px 8px;letter-spacing:1px;">v3.0 · 2026-03-29</span></p>
     </div>
   </header>
 
@@ -365,6 +365,17 @@
       <div class="monthly-chart" id="monthlyBars"><div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz işlem yok</p></div></div>
     </div>
     <div id="chartDonut" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:140px;">
+          <label>Ay Seç</label>
+          <input type="month" id="donutChartMonth" onchange="renderDonutChart()" style="padding:7px 10px;font-size:13px;">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;padding-bottom:2px;">
+          <button class="tab-btn active" id="donutFilterAll" onclick="setDonutFilter('all',this)">Tümü</button>
+          <button class="tab-btn" id="donutFilterExp" onclick="setDonutFilter('expense',this)">Gider</button>
+          <button class="tab-btn" id="donutFilterInc" onclick="setDonutFilter('income',this)">Gelir</button>
+        </div>
+      </div>
       <div id="donutWrap" class="donut-wrap"><div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div></div>
     </div>
     <div id="chartPayment" style="display:none">
@@ -435,10 +446,14 @@
     <button class="filter-btn" onclick="setFilter('expense',this)">Giderler</button>
     <button class="filter-btn" onclick="setFilter('income',this)">Gelirler</button>
     <button class="filter-btn" onclick="setFilter('month',this)">Bu Ay</button>
+    <button class="filter-btn" id="filterPastMonthBtn" onclick="setFilter('pastmonth',this)">📅 Ay Seç</button>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="Ara..." oninput="renderList()">
     </div>
+  </div>
+  <div id="pastMonthPickerWrap" style="display:none;padding:8px 16px 0;">
+    <input type="month" id="pastMonthPicker" onchange="renderList()" style="padding:7px 10px;font-size:13px;border:1px solid #e0e0e8;border-radius:10px;background:#fff;color:#1a1a2e;outline:none;">
   </div>
 
   <!-- LIST -->
@@ -1250,7 +1265,7 @@ function saveAndGenerate() {
       added++;
     }
   });
-  transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+  transactions.sort((a,b) => new Date(a.date) - new Date(b.date));
   save(); updateStats(); updateChart(); renderRecurring(); renderList();
   closeRecurringModal();
   showToast('✓ ' + added + ' işlem oluşturuldu (' + startDate + ' → ' + endDate + ')');
@@ -1274,7 +1289,7 @@ function generateForRecurring(rid) {
       added++;
     }
   });
-  transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+  transactions.sort((a,b) => new Date(a.date) - new Date(b.date));
   save(); updateStats(); updateChart(); renderRecurring(); renderList();
   showToast('✓ ' + added + ' yeni işlem eklendi');
 }
@@ -1414,7 +1429,21 @@ function setType(t) {
 function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); renderList();
+  btn.classList.add('active');
+  const pickerWrap = document.getElementById('pastMonthPickerWrap');
+  if (f === 'pastmonth') {
+    pickerWrap.style.display = '';
+    // Ay seçilmemişse önceki ayı varsayılan yap
+    const picker = document.getElementById('pastMonthPicker');
+    if (!picker.value) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      picker.value = d.toISOString().slice(0, 7);
+    }
+  } else {
+    pickerWrap.style.display = 'none';
+  }
+  renderList();
 }
 
 // ===== ADD =====
@@ -1429,7 +1458,8 @@ function addTransaction() {
   if (!desc)              { showToast('⚠️ Açıklama girin'); return; }
   if (!amount||amount<=0) { showToast('⚠️ Geçerli tutar girin'); return; }
   if (!date)              { showToast('⚠️ Alışveriş tarihi seçin'); return; }
-  transactions.unshift({ id:Date.now(), desc, merchant, amount, category:cat, type:currentType, date, paymentDate, payment });
+  transactions.push({ id:Date.now(), desc, merchant, amount, category:cat, type:currentType, date, paymentDate, payment });
+  transactions.sort((a,b) => new Date(a.date) - new Date(b.date));
   save(); updateStats(); updateChart(); renderList();
   document.getElementById('desc').value = '';
   document.getElementById('merchant').value = '';
@@ -1484,7 +1514,8 @@ let paymentFilter = 'all';
 
 function switchChart(type, btn) {
   activeChart = type;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.tab-bar .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
   document.getElementById('chartCategory').style.display = type==='category'?'':'none';
   document.getElementById('chartMonthly').style.display  = type==='monthly' ?'':'none';
   document.getElementById('chartDonut').style.display    = type==='donut'   ?'':'none';
@@ -1513,18 +1544,21 @@ function renderCatChart() {
   const max = Math.max(...entries.map(e=>e[1]));
   c.innerHTML = entries.map(([cat,val])=>{
     const h = Math.max(4,Math.round((val/max)*100));
-    return `<div class="chart-bar-wrap" title="${CATS[cat]?.label}: ${fmt(val)}">
-      <div class="chart-val">${fmt(val)}</div>
-      <div class="chart-bar" style="height:${h}%;background:${CATS[cat]?.color||'#9a9aaa'}"></div>
-      <div class="chart-label">${CATS[cat]?.icon||'📦'}</div>
-    </div>`;
+    return '<div class="chart-bar-wrap" title="'+(CATS[cat]?.label||cat)+': '+fmt(val)+'">'
+      + '<div class="chart-val">'+fmt(val)+'</div>'
+      + '<div class="chart-bar" style="height:'+h+'%;background:'+(CATS[cat]?.color||'#9a9aaa')+'"></div>'
+      + '<div class="chart-label">'+(CATS[cat]?.icon||'📦')+'</div>'
+      + '</div>';
   }).join('');
 }
 function renderMonthlyChart() {
   const c = document.getElementById('monthlyBars');
   if (!transactions.length) { c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz işlem yok</p></div>'; return; }
   const now = new Date();
-  const months = Array.from({length:6},(_,i)=>{ const d=new Date(now.getFullYear(),now.getMonth()-5+i,1); return d.toISOString().slice(0,7); });
+  const months = Array.from({length:6},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
+    return d.toISOString().slice(0,7);
+  });
   const data = months.map(m=>({
     label: new Date(m+'-01').toLocaleDateString('tr-TR',{month:'short'}),
     inc: transactions.filter(t=>t.type==='income'&&t.date.startsWith(m)).reduce((s,t)=>s+t.amount,0),
@@ -1532,27 +1566,50 @@ function renderMonthlyChart() {
   }));
   const max = Math.max(...data.flatMap(d=>[d.inc,d.exp]),1);
   c.innerHTML = data.map(d=>{
-    const ih=Math.max(2,Math.round((d.inc/max)*100)), eh=Math.max(2,Math.round((d.exp/max)*100));
-    return `<div class="monthly-col">
-      <div class="monthly-bars"><div class="monthly-bar inc" style="height:${ih}%" title="Gelir: ${fmt(d.inc)}"></div><div class="monthly-bar exp" style="height:${eh}%" title="Gider: ${fmt(d.exp)}"></div></div>
-      <div class="monthly-month">${d.label}</div>
-    </div>`;
+    const ih=Math.max(2,Math.round((d.inc/max)*100));
+    const eh=Math.max(2,Math.round((d.exp/max)*100));
+    return '<div class="monthly-col">'
+      + '<div class="monthly-bars">'
+      + '<div class="monthly-bar inc" style="height:'+ih+'%" title="Gelir: '+fmt(d.inc)+'"></div>'
+      + '<div class="monthly-bar exp" style="height:'+eh+'%" title="Gider: '+fmt(d.exp)+'"></div>'
+      + '</div>'
+      + '<div class="monthly-month">'+d.label+'</div>'
+      + '</div>';
   }).join('');
 }
+let donutFilter = 'expense';
+
+function setDonutFilter(f, btn) {
+  donutFilter = f;
+  document.querySelectorAll('#chartDonut .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDonutChart();
+}
+
 function renderDonutChart() {
+  const monthInput = document.getElementById('donutChartMonth');
+  if (!monthInput.value) monthInput.value = new Date().toISOString().slice(0,7);
+  const selMonth = monthInput.value;
+
+  let txs = transactions.filter(t => t.date.startsWith(selMonth));
+  if (donutFilter === 'expense') txs = txs.filter(t=>t.type==='expense');
+  else if (donutFilter === 'income') txs = txs.filter(t=>t.type==='income');
+
   const c = document.getElementById('donutWrap');
-  const exp = transactions.filter(t=>t.type==='expense');
-  if (!exp.length) { c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Henüz gider yok</p></div>'; return; }
+  if (!txs.length) {
+    c.innerHTML='<div class="empty-state" style="flex:1;padding:10px 0;"><p>Bu ayda işlem yok</p></div>';
+    return;
+  }
   const totals={};
-  exp.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
+  txs.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
   const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
   const total=entries.reduce((s,e)=>s+e[1],0);
   const R=45,cx=60,cy=60,circ=2*Math.PI*R; let off=0;
   const segs=entries.map(([cat,val])=>{ const d=(val/total)*circ; const s={cat,val,d,off}; off+=d; return s; });
-  const svgParts=segs.map(s=>`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${CATS[s.cat]?.color||'#9a9aaa'}" stroke-width="20" stroke-dasharray="${s.d} ${circ-s.d}" stroke-dashoffset="${-s.off}" transform="rotate(-90 ${cx} ${cy})"/>`).join('');
-  const svg=`<svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#f0f0f5" stroke-width="20"/>${svgParts}</svg>`;
-  const legend=`<div class="donut-legend">${entries.map(([cat,val])=>`<div class="legend-item"><div class="legend-dot" style="background:${CATS[cat]?.color||'#9a9aaa'}"></div><span class="legend-label">${CATS[cat]?.icon||'📦'} ${CATS[cat]?.label||cat}</span><span class="legend-pct">${Math.round((val/total)*100)}%</span><span class="legend-amt">${fmt(val)}</span></div>`).join('')}</div>`;
-  c.innerHTML=`<div class="donut-wrap">${svg}${legend}</div>`;
+  const svgParts=segs.map(s=>'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+(CATS[s.cat]?.color||'#9a9aaa')+'" stroke-width="20" stroke-dasharray="'+s.d+' '+(circ-s.d)+'" stroke-dashoffset="'+(-s.off)+'" transform="rotate(-90 '+cx+' '+cy+')"/>').join('');
+  const svg='<svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0"><circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#f0f0f5" stroke-width="20"/>'+svgParts+'</svg>';
+  const legend='<div class="donut-legend">'+entries.map(([cat,val])=>'<div class="legend-item"><div class="legend-dot" style="background:'+(CATS[cat]?.color||'#9a9aaa')+'"></div><span class="legend-label">'+(CATS[cat]?.icon||'📦')+' '+(CATS[cat]?.label||cat)+'</span><span class="legend-pct">'+Math.round((val/total)*100)+'%</span><span class="legend-amt">'+fmt(val)+'</span></div>').join('')+'</div>';
+  c.innerHTML='<div class="donut-wrap">'+svg+legend+'</div>';
 }
 
 function renderPaymentChart() {
@@ -1728,7 +1785,7 @@ function saveTxEdit() {
   const idx = transactions.findIndex(x => String(x.id) === String(editingTxId));
   if (idx === -1) return;
   transactions[idx] = { ...transactions[idx], desc, merchant, amount, category:cat, type:editType, date, paymentDate, payment };
-  transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+  transactions.sort((a,b) => new Date(a.date) - new Date(b.date));
   save(); updateStats(); updateChart(); renderList();
   closeTxEditModal();
   showToast('✓ İşlem güncellendi');
@@ -1739,9 +1796,13 @@ function renderList() {
   const q=document.getElementById('searchInput').value.toLowerCase();
   const ym=new Date().toISOString().slice(0,7);
   let items=transactions.filter(t=>{
-    if (currentFilter==='expense'&&t.type!=='expense') return false;
-    if (currentFilter==='income' &&t.type!=='income')  return false;
-    if (currentFilter==='month'  &&!t.date.startsWith(ym)) return false;
+    if (currentFilter==='expense'  &&t.type!=='expense') return false;
+    if (currentFilter==='income'   &&t.type!=='income')  return false;
+    if (currentFilter==='month'    &&!t.date.startsWith(ym)) return false;
+    if (currentFilter==='pastmonth') {
+      const selMonth = document.getElementById('pastMonthPicker').value;
+      if (selMonth && !t.date.startsWith(selMonth)) return false;
+    }
     if (q&&!t.desc.toLowerCase().includes(q)&&!CATS[t.category]?.label.toLowerCase().includes(q)&&!(t.merchant||'').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -1750,7 +1811,7 @@ function renderList() {
   if (!items.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">💸</div><p>Gösterilecek işlem yok</p></div>'; return; }
   const groups={};
   items.forEach(t=>{ const m=t.date.slice(0,7); if(!groups[m]) groups[m]=[]; groups[m].push(t); });
-  el.innerHTML=Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(month=>{
+  el.innerHTML=Object.keys(groups).sort((a,b)=>a.localeCompare(b)).map(month=>{
     const txs=groups[month];
     const mI=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
     const mE=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -2284,7 +2345,7 @@ async function autoLoadFromDrive(){
 function fmt(n){return '₺'+Math.abs(n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function td(){return new Date().toISOString().slice(0,10);}
-const APP_VERSION='2.6';
+const APP_VERSION='3.0';
 function filePrefix(){ return 'gider-takip-v'+APP_VERSION+'-'+td(); }
 function save(){
   localStorage.setItem('gider_txns',JSON.stringify(transactions));
